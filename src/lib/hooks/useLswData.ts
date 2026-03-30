@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { formatDate } from '@/lib/dates'
+import { formatDate, countApplicableDays } from '@/lib/dates'
 import type { Category, Behavior, Entry, CellComment, EntryValue } from '@/lib/types'
 
 interface LswData {
   categories: Category[]
-  behaviors: Behavior[]
-  entries: Map<string, Entry> // key: `${behaviorId}_${date}`
-  comments: Map<string, CellComment> // key: `${behaviorId}_${date}`
+  behaviors: Behavior[] // active only
+  archivedBehaviors: Behavior[]
+  entries: Map<string, Entry>
+  comments: Map<string, CellComment>
   loading: boolean
   refresh: () => Promise<void>
   upsertEntry: (behaviorId: string, date: string, value: EntryValue | null) => Promise<void>
@@ -23,6 +24,7 @@ function entryKey(behaviorId: string, date: string): string {
 export function useLswData(userId: string | undefined, weekDates: Date[]): LswData {
   const [categories, setCategories] = useState<Category[]>([])
   const [behaviors, setBehaviors] = useState<Behavior[]>([])
+  const [archivedBehaviors, setArchivedBehaviors] = useState<Behavior[]>([])
   const [entries, setEntries] = useState<Map<string, Entry>>(new Map())
   const [comments, setComments] = useState<Map<string, CellComment>>(new Map())
   const [loading, setLoading] = useState(true)
@@ -34,7 +36,7 @@ export function useLswData(userId: string | undefined, weekDates: Date[]): LswDa
     if (!userId || weekDates.length === 0) return
     setLoading(true)
 
-    const [catRes, behRes, entRes, comRes] = await Promise.all([
+    const [catRes, activeBehRes, archivedBehRes, entRes, comRes] = await Promise.all([
       supabase
         .from('lsw_categories')
         .select('*')
@@ -45,6 +47,12 @@ export function useLswData(userId: string | undefined, weekDates: Date[]): LswDa
         .select('*')
         .eq('user_id', userId)
         .eq('is_archived', false)
+        .order('sort_order'),
+      supabase
+        .from('lsw_behaviors')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_archived', true)
         .order('sort_order'),
       supabase
         .from('lsw_entries')
@@ -59,7 +67,8 @@ export function useLswData(userId: string | undefined, weekDates: Date[]): LswDa
     ])
 
     setCategories(catRes.data ?? [])
-    setBehaviors(behRes.data ?? [])
+    setBehaviors(activeBehRes.data ?? [])
+    setArchivedBehaviors(archivedBehRes.data ?? [])
 
     const entryMap = new Map<string, Entry>()
     for (const e of entRes.data ?? []) {
@@ -85,7 +94,6 @@ export function useLswData(userId: string | undefined, weekDates: Date[]): LswDa
     const key = entryKey(behaviorId, date)
 
     if (value === null) {
-      // Delete entry
       setEntries(prev => {
         const next = new Map(prev)
         next.delete(key)
@@ -98,7 +106,6 @@ export function useLswData(userId: string | undefined, weekDates: Date[]): LswDa
         .eq('entry_date', date)
         .eq('user_id', userId)
     } else {
-      // Upsert entry
       const optimistic: Entry = { id: key, behavior_id: behaviorId, entry_date: date, value }
       setEntries(prev => new Map(prev).set(key, optimistic))
       await supabase
@@ -138,5 +145,37 @@ export function useLswData(userId: string | undefined, weekDates: Date[]): LswDa
     }
   }, [userId])
 
-  return { categories, behaviors, entries, comments, loading, refresh: fetchData, upsertEntry, upsertComment }
+  return { categories, behaviors, archivedBehaviors, entries, comments, loading, refresh: fetchData, upsertEntry, upsertComment }
+}
+
+// Calculate completion % using frequency-based denominator
+export function calculateCompletion(
+  behaviors: Behavior[],
+  entries: Map<string, Entry>,
+  weekDates: Date[]
+): number {
+  if (behaviors.length === 0 || weekDates.length === 0) return 0
+
+  let completed = 0
+  let total = 0
+
+  for (const behavior of behaviors) {
+    const applicableDays = countApplicableDays(
+      weekDates,
+      behavior.frequency,
+      behavior.days_of_week ?? undefined,
+      behavior.monthly_pattern ?? undefined
+    )
+    total += applicableDays
+
+    for (const date of weekDates) {
+      const key = `${behavior.id}_${formatDate(date)}`
+      const entry = entries.get(key)
+      if (entry?.value === 'y') {
+        completed++
+      }
+    }
+  }
+
+  return total === 0 ? 0 : (completed / total) * 100
 }

@@ -17,7 +17,6 @@ const VALUE_OPTIONS: { value: EntryValue | null; label: string; style: string }[
   { value: null, label: 'Empty', style: 'bg-gray-100 text-gray-600' },
   { value: 'y', label: 'Yes', style: 'bg-green-500 text-white' },
   { value: 'n', label: 'No', style: 'bg-red-500 text-white' },
-  { value: 'k', label: 'Kind of', style: 'bg-amber-400 text-white' },
 ]
 
 export default function CellDetailModal({
@@ -72,13 +71,13 @@ export default function CellDetailModal({
 
         {/* Comment */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-500 mb-2">Notes</label>
+          <label className="block text-xs font-medium text-gray-500 mb-2">Comment</label>
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="How did this go? What can you improve?"
+            placeholder="What went well? What could improve? Why was this missed?"
           />
         </div>
 

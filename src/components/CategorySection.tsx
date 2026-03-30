@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Pencil, Archive } from 'lucide-react'
 import BehaviorRow from './BehaviorRow'
 import type { Category, Behavior, Entry, CellComment, EntryValue } from '@/lib/types'
 import { formatDayHeader, isToday as checkIsToday } from '@/lib/dates'
@@ -9,25 +9,32 @@ import { formatDayHeader, isToday as checkIsToday } from '@/lib/dates'
 interface CategorySectionProps {
   category: Category
   behaviors: Behavior[]
+  archivedBehaviors: Behavior[]
   weekDates: Date[]
   entries: Map<string, Entry>
   comments: Map<string, CellComment>
   onCellTap: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
   onCellLongPress: (behaviorId: string, date: string) => void
   onAddBehavior: (categoryId: string) => void
+  onEditBehavior: (behaviorId: string) => void
+  onEditCategory: (categoryId: string) => void
 }
 
 export default function CategorySection({
   category,
   behaviors,
+  archivedBehaviors,
   weekDates,
   entries,
   comments,
   onCellTap,
   onCellLongPress,
   onAddBehavior,
+  onEditBehavior,
+  onEditCategory,
 }: CategorySectionProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
 
   return (
     <div className="mb-2">
@@ -44,6 +51,13 @@ export default function CategorySection({
           <span className="text-xs text-gray-400 ml-1">
             ({behaviors.length})
           </span>
+        </button>
+        <button
+          onClick={() => onEditCategory(category.id)}
+          className="p-1 text-gray-400 hover:text-gray-600 mr-1"
+          title="Edit category"
+        >
+          <Pencil size={14} />
         </button>
         <button
           onClick={() => onAddBehavior(category.id)}
@@ -78,7 +92,7 @@ export default function CategorySection({
             </div>
           </div>
 
-          {/* Behavior rows */}
+          {/* Active behavior rows */}
           {behaviors.map(behavior => (
             <BehaviorRow
               key={behavior.id}
@@ -88,18 +102,45 @@ export default function CategorySection({
               comments={comments}
               onCellTap={onCellTap}
               onCellLongPress={onCellLongPress}
+              onEditBehavior={onEditBehavior}
             />
           ))}
 
           {behaviors.length === 0 && (
             <div className="px-4 py-6 text-center text-sm text-gray-400">
               No behaviors yet.{' '}
-              <button
-                onClick={() => onAddBehavior(category.id)}
-                className="text-blue-600 hover:underline"
-              >
+              <button onClick={() => onAddBehavior(category.id)} className="text-blue-600 hover:underline">
                 Add one
               </button>
+            </div>
+          )}
+
+          {/* Archived toggle */}
+          {archivedBehaviors.length > 0 && (
+            <div className="px-3 py-2">
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+              >
+                <Archive size={12} />
+                {showArchived ? 'Hide' : 'Show'} {archivedBehaviors.length} archived
+              </button>
+              {showArchived && (
+                <div className="mt-1 opacity-60">
+                  {archivedBehaviors.map(behavior => (
+                    <BehaviorRow
+                      key={behavior.id}
+                      behavior={behavior}
+                      weekDates={weekDates}
+                      entries={entries}
+                      comments={comments}
+                      onCellTap={onCellTap}
+                      onCellLongPress={onCellLongPress}
+                      onEditBehavior={onEditBehavior}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

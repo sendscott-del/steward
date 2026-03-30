@@ -1,28 +1,58 @@
-import { startOfWeek, addDays, addWeeks, format, isSameDay } from 'date-fns'
+import { startOfWeek, addDays, addWeeks, subWeeks, format, isSameDay, getDate, getDay } from 'date-fns'
+import type { MonthlyPattern } from '@/lib/types'
 
-// Get the Sunday that starts the current period (4-week block)
-// Periods are anchored to the first Sunday of the current month
-function getMonthFirstSunday(date: Date): Date {
-  const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
-  return startOfWeek(firstOfMonth, { weekStartsOn: 0 })
+// Get the Sunday that starts the week containing a given date
+export function getWeekStart(date: Date): Date {
+  return startOfWeek(date, { weekStartsOn: 0 })
 }
 
-export function getPeriodStart(referenceDate: Date, periodOffset: number): Date {
-  const anchor = getMonthFirstSunday(referenceDate)
-  return addWeeks(anchor, periodOffset * 4)
-}
-
-export function getWeekDates(periodStart: Date, weekIndex: number): Date[] {
-  const weekStart = addWeeks(periodStart, weekIndex)
+// Get array of 7 dates for the week starting at weekStart
+export function getWeekDates(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 }
 
-export function getCurrentPosition(today: Date): { periodStart: Date; weekIndex: number } {
-  const periodStart = getMonthFirstSunday(today)
-  const diffMs = today.getTime() - periodStart.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  const weekIndex = Math.min(Math.floor(diffDays / 7), 3)
-  return { periodStart, weekIndex }
+// Navigate weeks: move forward or backward by 1 week
+export function nextWeek(weekStart: Date): Date {
+  return addWeeks(weekStart, 1)
+}
+
+export function prevWeek(weekStart: Date): Date {
+  return subWeeks(weekStart, 1)
+}
+
+// Get the month label for a given week (uses the Thursday of the week to determine the month)
+export function getMonthForWeek(weekStart: Date): { month: string; year: number } {
+  const thursday = addDays(weekStart, 4) // Thursday determines which month the week "belongs" to
+  return {
+    month: format(thursday, 'MMMM'),
+    year: thursday.getFullYear(),
+  }
+}
+
+// Get all weeks in a given month (weeks that overlap with the month)
+export function getMonthWeeks(year: number, month: number): Date[] {
+  const firstOfMonth = new Date(year, month, 1)
+  const lastOfMonth = new Date(year, month + 1, 0)
+  const firstWeekStart = getWeekStart(firstOfMonth)
+  const lastWeekStart = getWeekStart(lastOfMonth)
+
+  const weeks: Date[] = []
+  let current = firstWeekStart
+  while (current <= lastWeekStart) {
+    weeks.push(current)
+    current = addWeeks(current, 1)
+  }
+  return weeks
+}
+
+// Get week number within the month (1-based)
+export function getWeekOfMonth(weekStart: Date): { weekNum: number; totalWeeks: number } {
+  const { year } = getMonthForWeek(weekStart)
+  const thursday = addDays(weekStart, 4)
+  const monthIndex = thursday.getMonth()
+  const weeks = getMonthWeeks(year, monthIndex)
+  const weekNum = weeks.findIndex(w => w.getTime() === weekStart.getTime()) + 1
+  return { weekNum: weekNum || 1, totalWeeks: weeks.length }
 }
 
 export function formatDate(date: Date): string {
@@ -44,10 +74,58 @@ export function formatWeekRange(dates: Date[]): string {
   return `${start} - ${end}`
 }
 
-export function formatPeriodLabel(periodStart: Date): string {
-  return format(periodStart, 'MMMM yyyy')
-}
-
 export function isToday(date: Date): boolean {
   return isSameDay(date, new Date())
+}
+
+// Check if a specific date matches a recurrence pattern
+export function matchesRecurrence(
+  date: Date,
+  frequency: string,
+  daysOfWeek?: number[],
+  monthlyPattern?: MonthlyPattern
+): boolean {
+  if (frequency === 'daily') return true
+
+  if (frequency === 'weekly') {
+    if (!daysOfWeek || daysOfWeek.length === 0) return true
+    return daysOfWeek.includes(getDay(date))
+  }
+
+  if (frequency === 'monthly' && monthlyPattern) {
+    if (monthlyPattern.type === 'day_of_month' && monthlyPattern.day != null) {
+      return getDate(date) === monthlyPattern.day
+    }
+    if (monthlyPattern.type === 'nth_weekday' && monthlyPattern.nth != null && monthlyPattern.weekday != null) {
+      if (getDay(date) !== monthlyPattern.weekday) return false
+      const dayOfMonth = getDate(date)
+      const nth = Math.ceil(dayOfMonth / 7)
+      return nth === monthlyPattern.nth
+    }
+  }
+
+  if (frequency === 'quarterly') {
+    const month = date.getMonth()
+    if (month % 3 !== 0) return false
+    if (monthlyPattern) {
+      if (monthlyPattern.type === 'day_of_month' && monthlyPattern.day != null) return getDate(date) === monthlyPattern.day
+      if (monthlyPattern.type === 'nth_weekday' && monthlyPattern.nth != null && monthlyPattern.weekday != null) {
+        if (getDay(date) !== monthlyPattern.weekday) return false
+        return Math.ceil(getDate(date) / 7) === monthlyPattern.nth
+      }
+    }
+    return getDate(date) === 1
+  }
+
+  return true
+}
+
+// Count applicable days in a week for a behavior (for completion % denominator)
+export function countApplicableDays(
+  weekDates: Date[],
+  frequency: string,
+  daysOfWeek?: number[],
+  monthlyPattern?: MonthlyPattern
+): number {
+  return weekDates.filter(date => matchesRecurrence(date, frequency, daysOfWeek, monthlyPattern)).length
 }

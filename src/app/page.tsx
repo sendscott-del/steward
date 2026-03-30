@@ -3,34 +3,33 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Plus } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { useLswData } from '@/lib/hooks/useLswData'
-import { getCurrentPosition, getPeriodStart, getWeekDates, formatDate } from '@/lib/dates'
+import { useLswData, calculateCompletion } from '@/lib/hooks/useLswData'
+import { getWeekStart, getWeekDates, nextWeek, prevWeek, formatDate } from '@/lib/dates'
 import AppShell from '@/components/AppShell'
+import type { TabId } from '@/components/AppShell'
 import WeekNavigation from '@/components/WeekNavigation'
 import CompletionBar from '@/components/CompletionBar'
 import CategorySection from '@/components/CategorySection'
 import NotesTab from '@/components/NotesTab'
+import ReflectionLog from '@/components/ReflectionLog'
 import CellDetailModal from '@/components/CellDetailModal'
 import AddCategoryModal from '@/components/AddCategoryModal'
 import AddBehaviorModal from '@/components/AddBehaviorModal'
 import EditBehaviorModal from '@/components/EditBehaviorModal'
+import EditCategoryModal from '@/components/EditCategoryModal'
 import { cycleValue } from '@/components/BehaviorRow'
 import type { EntryValue } from '@/lib/types'
 
 export default function HomePage() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'work' | 'notes'>('work')
+  const [activeTab, setActiveTab] = useState<TabId>('work')
 
-  // Period/week navigation state
-  const today = useMemo(() => new Date(), [])
-  const todayPosition = useMemo(() => getCurrentPosition(today), [today])
-  const [periodStart, setPeriodStart] = useState(todayPosition.periodStart)
-  const [weekIndex, setWeekIndex] = useState(todayPosition.weekIndex)
-
-  const weekDates = useMemo(() => getWeekDates(periodStart, weekIndex), [periodStart, weekIndex])
+  // Week navigation — just track the current week's start date
+  const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()))
+  const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart])
 
   // Data
-  const { categories, behaviors, entries, comments, loading, refresh, upsertEntry, upsertComment } =
+  const { categories, behaviors, archivedBehaviors, entries, comments, loading, refresh, upsertEntry, upsertComment } =
     useLswData(user?.id, weekDates)
 
   // Modal state
@@ -42,24 +41,13 @@ export default function HomePage() {
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [addBehaviorCategoryId, setAddBehaviorCategoryId] = useState<string | null>(null)
   const [editBehaviorId, setEditBehaviorId] = useState<string | null>(null)
+  const [editCategoryId, setEditCategoryId] = useState<string | null>(null)
 
-  // Completion calculation
-  const completionPercentage = useMemo(() => {
-    if (behaviors.length === 0) return 0
-    let completed = 0
-    let total = 0
-    for (const behavior of behaviors) {
-      for (const date of weekDates) {
-        const key = `${behavior.id}_${formatDate(date)}`
-        const entry = entries.get(key)
-        total++
-        if (entry && (entry.value === 'y' || entry.value === 'k')) {
-          completed++
-        }
-      }
-    }
-    return total === 0 ? 0 : (completed / total) * 100
-  }, [behaviors, entries, weekDates])
+  // Completion calculation using frequency-based denominator
+  const completionPercentage = useMemo(
+    () => calculateCompletion(behaviors, entries, weekDates),
+    [behaviors, entries, weekDates]
+  )
 
   // Handlers
   const handleCellTap = useCallback(
@@ -73,11 +61,12 @@ export default function HomePage() {
   const handleCellLongPress = useCallback(
     (behaviorId: string, date: string) => {
       const behavior = behaviors.find(b => b.id === behaviorId)
+        ?? archivedBehaviors.find(b => b.id === behaviorId)
       if (behavior) {
         setCellDetailModal({ behaviorId, behaviorName: behavior.name, date })
       }
     },
-    [behaviors]
+    [behaviors, archivedBehaviors]
   )
 
   const handleCellDetailSave = useCallback(
@@ -96,29 +85,15 @@ export default function HomePage() {
     [cellDetailModal, entries, upsertEntry, upsertComment]
   )
 
-  // Week navigation
-  const handlePrevWeek = () => setWeekIndex(i => Math.max(0, i - 1))
-  const handleNextWeek = () => setWeekIndex(i => Math.min(3, i + 1))
-  const handlePrevPeriod = () => {
-    setPeriodStart(prev => getPeriodStart(prev, -1))
-    setWeekIndex(0)
-  }
-  const handleNextPeriod = () => {
-    setPeriodStart(prev => getPeriodStart(prev, 1))
-    setWeekIndex(0)
-  }
-  const handleToday = () => {
-    const pos = getCurrentPosition(new Date())
-    setPeriodStart(pos.periodStart)
-    setWeekIndex(pos.weekIndex)
-  }
+  // Navigation
+  const handlePrevWeek = () => setWeekStart(prev => prevWeek(prev))
+  const handleNextWeek = () => setWeekStart(prev => nextWeek(prev))
+  const handleToday = () => setWeekStart(getWeekStart(new Date()))
 
   // Group behaviors by category
   const behaviorsByCategory = useMemo(() => {
     const map = new Map<string, typeof behaviors>()
-    for (const cat of categories) {
-      map.set(cat.id, [])
-    }
+    for (const cat of categories) map.set(cat.id, [])
     for (const beh of behaviors) {
       const list = map.get(beh.category_id)
       if (list) list.push(beh)
@@ -126,7 +101,19 @@ export default function HomePage() {
     return map
   }, [categories, behaviors])
 
-  const editBehavior = editBehaviorId ? behaviors.find(b => b.id === editBehaviorId) : null
+  const archivedByCategory = useMemo(() => {
+    const map = new Map<string, typeof archivedBehaviors>()
+    for (const cat of categories) map.set(cat.id, [])
+    for (const beh of archivedBehaviors) {
+      const list = map.get(beh.category_id)
+      if (list) list.push(beh)
+    }
+    return map
+  }, [categories, archivedBehaviors])
+
+  const allBehaviors = useMemo(() => [...behaviors, ...archivedBehaviors], [behaviors, archivedBehaviors])
+  const editBehavior = editBehaviorId ? allBehaviors.find(b => b.id === editBehaviorId) : null
+  const editCategory = editCategoryId ? categories.find(c => c.id === editCategoryId) : null
   const addBehaviorCategory = addBehaviorCategoryId
     ? categories.find(c => c.id === addBehaviorCategoryId)
     : null
@@ -136,13 +123,10 @@ export default function HomePage() {
       {activeTab === 'work' && (
         <div>
           <WeekNavigation
-            weekIndex={weekIndex}
-            periodStart={periodStart}
+            weekStart={weekStart}
             weekDates={weekDates}
             onPrevWeek={handlePrevWeek}
             onNextWeek={handleNextWeek}
-            onPrevPeriod={handlePrevPeriod}
-            onNextPeriod={handleNextPeriod}
             onToday={handleToday}
           />
 
@@ -159,12 +143,15 @@ export default function HomePage() {
                   key={category.id}
                   category={category}
                   behaviors={behaviorsByCategory.get(category.id) ?? []}
+                  archivedBehaviors={archivedByCategory.get(category.id) ?? []}
                   weekDates={weekDates}
                   entries={entries}
                   comments={comments}
                   onCellTap={handleCellTap}
                   onCellLongPress={handleCellLongPress}
                   onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
+                  onEditBehavior={behId => setEditBehaviorId(behId)}
+                  onEditCategory={catId => setEditCategoryId(catId)}
                 />
               ))}
 
@@ -189,6 +176,8 @@ export default function HomePage() {
           )}
         </div>
       )}
+
+      {activeTab === 'reflect' && user && <ReflectionLog userId={user.id} />}
 
       {activeTab === 'notes' && user && <NotesTab userId={user.id} />}
 
@@ -233,6 +222,14 @@ export default function HomePage() {
           behavior={editBehavior}
           onSuccess={refresh}
           onClose={() => setEditBehaviorId(null)}
+        />
+      )}
+
+      {editCategory && (
+        <EditCategoryModal
+          category={editCategory}
+          onSuccess={refresh}
+          onClose={() => setEditCategoryId(null)}
         />
       )}
     </AppShell>

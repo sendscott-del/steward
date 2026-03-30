@@ -7,6 +7,7 @@ interface DayCellProps {
   value: EntryValue | null
   hasComment: boolean
   isToday: boolean
+  isApplicable: boolean // whether this day applies based on frequency
   onTap: () => void
   onLongPress: () => void
 }
@@ -14,16 +15,14 @@ interface DayCellProps {
 const VALUE_STYLES: Record<string, string> = {
   y: 'bg-green-500 text-white',
   n: 'bg-red-500 text-white',
-  k: 'bg-amber-400 text-white',
 }
 
 const VALUE_LABELS: Record<string, string> = {
   y: 'Y',
   n: 'N',
-  k: 'K',
 }
 
-export default function DayCell({ value, hasComment, isToday, onTap, onLongPress }: DayCellProps) {
+export default function DayCell({ value, hasComment, isToday, isApplicable, onTap, onLongPress }: DayCellProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLongPress = useRef(false)
 
@@ -46,6 +45,15 @@ export default function DayCell({ value, hasComment, isToday, onTap, onLongPress
   const handleTouchMove = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
   }, [])
+
+  // Non-applicable days are dimmed
+  if (!isApplicable) {
+    return (
+      <div className="cell-tap flex items-center justify-center w-10 h-10 min-w-[2.5rem] rounded text-xs text-gray-300 bg-gray-50/50">
+        —
+      </div>
+    )
+  }
 
   const bgStyle = value ? VALUE_STYLES[value] : isToday ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
 
