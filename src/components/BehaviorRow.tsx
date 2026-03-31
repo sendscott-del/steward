@@ -1,9 +1,10 @@
 'use client'
 
 import DayCell from './DayCell'
-import { Pencil, Archive } from 'lucide-react'
+import FrequencyDisplay from './FrequencyDisplay'
+import { Pencil } from 'lucide-react'
 import type { Behavior, Entry, CellComment, EntryValue } from '@/lib/types'
-import { formatDate, isToday as checkIsToday, matchesRecurrence, formatFrequency } from '@/lib/dates'
+import { formatDate, isToday as checkIsToday, matchesRecurrence } from '@/lib/dates'
 
 interface BehaviorRowProps {
   behavior: Behavior
@@ -26,13 +27,6 @@ export default function BehaviorRow({
   behavior, weekDates, entries, comments, compliancePercent,
   onCellTap, onCellLongPress, onEditBehavior,
 }: BehaviorRowProps) {
-  const freqDisplay = formatFrequency(
-    behavior.repeat_interval ?? 1,
-    behavior.repeat_unit ?? 'day',
-    behavior.days_of_week,
-    behavior.monthly_pattern
-  )
-
   const pct = compliancePercent != null ? Math.round(compliancePercent) : null
   const pctColor = pct == null ? 'text-gray-300' : pct >= 80 ? 'text-green-600' : pct >= 50 ? 'text-amber-600' : 'text-red-600'
 
@@ -60,12 +54,17 @@ export default function BehaviorRow({
       </div>
 
       {/* Col 3: Frequency */}
-      <div className="sticky left-[136px] z-10 bg-white flex items-center w-14 min-w-[3.5rem] px-1 border-r border-gray-100">
-        <span className="text-[9px] leading-tight text-gray-400 break-words">{freqDisplay}</span>
+      <div className="sticky left-[136px] z-10 bg-white flex items-center w-24 min-w-[6rem] px-1.5 py-1 border-r border-gray-100">
+        <FrequencyDisplay
+          repeatInterval={behavior.repeat_interval ?? 1}
+          repeatUnit={behavior.repeat_unit ?? 'day'}
+          daysOfWeek={behavior.days_of_week}
+          monthlyPattern={behavior.monthly_pattern}
+        />
       </div>
 
       {/* Col 4: 4-week compliance % */}
-      <div className="sticky left-[192px] z-10 bg-white flex items-center justify-center w-10 min-w-[2.5rem] border-r border-gray-100">
+      <div className="sticky left-[232px] z-10 bg-white flex items-center justify-center w-10 min-w-[2.5rem] border-r border-gray-100">
         <span className={`text-[10px] font-bold ${pctColor}`}>
           {pct != null ? `${pct}%` : '—'}
         </span>

@@ -56,11 +56,11 @@ export default function CategorySection({
               <span className="text-[9px] text-gray-400 font-medium">TASK</span>
             </div>
             {/* Freq col */}
-            <div className="sticky left-[136px] z-10 bg-white w-14 min-w-[3.5rem] border-r border-gray-100 px-1 py-1">
-              <span className="text-[9px] text-gray-400 font-medium">FREQ</span>
+            <div className="sticky left-[136px] z-10 bg-white w-24 min-w-[6rem] border-r border-gray-100 px-1.5 py-1">
+              <span className="text-[9px] text-gray-400 font-medium">FREQUENCY</span>
             </div>
             {/* % col */}
-            <div className="sticky left-[192px] z-10 bg-white w-10 min-w-[2.5rem] border-r border-gray-100 flex items-center justify-center py-1">
+            <div className="sticky left-[232px] z-10 bg-white w-10 min-w-[2.5rem] border-r border-gray-100 flex items-center justify-center py-1">
               <span className="text-[9px] text-gray-400 font-medium">4W%</span>
             </div>
             {/* Day headers */}
