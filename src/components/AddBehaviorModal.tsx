@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { RepeatUnit, MonthlyPattern } from '@/lib/types'
-import FrequencyPicker from './FrequencyPicker'
+import type { Frequency } from '@/lib/types'
 
 interface AddBehaviorModalProps {
   userId: string
@@ -19,10 +18,7 @@ export default function AddBehaviorModal({
   userId, categoryId, categoryName, existingCount, onSuccess, onClose,
 }: AddBehaviorModalProps) {
   const [name, setName] = useState('')
-  const [repeatInterval, setRepeatInterval] = useState(1)
-  const [repeatUnit, setRepeatUnit] = useState<RepeatUnit>('day')
-  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([])
-  const [monthlyPattern, setMonthlyPattern] = useState<MonthlyPattern | null>(null)
+  const [frequency, setFrequency] = useState<Frequency>('weekly')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -34,10 +30,7 @@ export default function AddBehaviorModal({
       user_id: userId,
       category_id: categoryId,
       name: name.trim(),
-      repeat_interval: repeatInterval,
-      repeat_unit: repeatUnit,
-      days_of_week: repeatUnit === 'week' && daysOfWeek.length > 0 ? daysOfWeek : null,
-      monthly_pattern: repeatUnit === 'month' ? monthlyPattern : null,
+      frequency,
       sort_order: existingCount,
     })
 
@@ -49,7 +42,7 @@ export default function AddBehaviorModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 max-h-[85vh] overflow-y-auto">
+      <div className="relative bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold text-gray-900">Add Behavior</h3>
@@ -73,20 +66,25 @@ export default function AddBehaviorModal({
               required
               autoFocus
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., Review daily goals"
+              placeholder="e.g., Review ward council agenda"
             />
           </div>
 
-          <FrequencyPicker
-            repeatInterval={repeatInterval}
-            repeatUnit={repeatUnit}
-            daysOfWeek={daysOfWeek}
-            monthlyPattern={monthlyPattern}
-            onIntervalChange={setRepeatInterval}
-            onUnitChange={setRepeatUnit}
-            onDaysChange={setDaysOfWeek}
-            onMonthlyPatternChange={setMonthlyPattern}
-          />
+          <div>
+            <label htmlFor="beh-freq" className="block text-sm font-medium text-gray-700 mb-1">
+              Frequency
+            </label>
+            <select
+              id="beh-freq"
+              value={frequency}
+              onChange={e => setFrequency(e.target.value as Frequency)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+            </select>
+          </div>
 
           <button
             type="submit"

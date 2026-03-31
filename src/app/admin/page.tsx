@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import type {
   Template, TemplateCategory, TemplateBehavior,
-  UserGroup, GroupMember, TemplateAssignment, RepeatUnit, MonthlyPattern,
+  UserGroup, GroupMember, TemplateAssignment, Frequency,
 } from '@/lib/types'
 
 type AdminTab = 'templates' | 'groups' | 'assign'
@@ -181,7 +181,7 @@ function TemplateEditor({ templateId }: { templateId: string }) {
   const [newCatName, setNewCatName] = useState('')
   const [addingBehavior, setAddingBehavior] = useState<string | null>(null) // category id
   const [newBehName, setNewBehName] = useState('')
-  const [newBehFreq, setNewBehFreq] = useState<RepeatUnit>('day')
+  const [newBehFreq, setNewBehFreq] = useState<Frequency>('weekly')
 
   const fetch = useCallback(async () => {
     const [catRes, behRes] = await Promise.all([
@@ -214,10 +214,10 @@ function TemplateEditor({ templateId }: { templateId: string }) {
     if (!newBehName.trim()) return
     const count = behaviors.filter(b => b.category_id === categoryId).length
     await supabase.from('lsw_template_behaviors').insert({
-      category_id: categoryId, name: newBehName.trim(), repeat_unit: newBehFreq, repeat_interval: 1, sort_order: count,
+      category_id: categoryId, name: newBehName.trim(), frequency: newBehFreq, sort_order: count,
     })
     setNewBehName('')
-    setNewBehFreq('day')
+    setNewBehFreq('weekly')
     setAddingBehavior(null)
     fetch()
   }
@@ -227,7 +227,7 @@ function TemplateEditor({ templateId }: { templateId: string }) {
     fetch()
   }
 
-  const freqLabel = (f: string) => ({ day: 'Daily', week: 'Weekly', month: 'Monthly' }[f] ?? f)
+  const freqLabel = (f: string) => ({ weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly' }[f] ?? f)
 
   return (
     <div className="p-4 space-y-3">
@@ -250,7 +250,7 @@ function TemplateEditor({ templateId }: { templateId: string }) {
               <div key={beh.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                 <div>
                   <span className="text-sm text-gray-700">{beh.name}</span>
-                  <span className="ml-2 text-[10px] text-gray-400">{freqLabel(beh.repeat_unit ?? 'day')}</span>
+                  <span className="ml-2 text-[10px] text-gray-400">{freqLabel(beh.frequency ?? 'weekly')}</span>
                 </div>
                 <button onClick={() => handleDeleteBehavior(beh.id)} className="p-0.5 text-gray-300 hover:text-red-500">
                   <X size={12} />
@@ -273,10 +273,10 @@ function TemplateEditor({ templateId }: { templateId: string }) {
                 onKeyDown={e => e.key === 'Enter' && handleAddBehavior(cat.id)}
               />
               <div className="flex gap-2">
-                <select value={newBehFreq} onChange={e => setNewBehFreq(e.target.value as RepeatUnit)} className="px-2 py-1 border border-gray-300 rounded text-xs">
-                  <option value="day">Daily</option>
-                  <option value="week">Weekly</option>
-                  <option value="month">Monthly</option>
+                <select value={newBehFreq} onChange={e => setNewBehFreq(e.target.value as Frequency)} className="px-2 py-1 border border-gray-300 rounded text-xs">
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
                 </select>
                 <button onClick={() => handleAddBehavior(cat.id)} disabled={!newBehName.trim()} className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium disabled:opacity-50">
                   Add

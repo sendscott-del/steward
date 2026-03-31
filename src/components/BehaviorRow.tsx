@@ -1,11 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import DayCell from './DayCell'
-import FrequencyDisplay from './FrequencyDisplay'
-import { Pencil, ChevronUp, ChevronDown } from 'lucide-react'
+import { Pencil, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Behavior, Entry, CellComment, EntryValue } from '@/lib/types'
-import { formatDate, isToday as checkIsToday, getNextOccurrences, formatOccurrenceHeader } from '@/lib/dates'
+import { formatDate, isToday as checkIsToday, getPeriodCells, getDefaultCount, getCellLabel } from '@/lib/dates'
 
 interface BehaviorRowProps {
   behavior: Behavior
@@ -28,24 +27,19 @@ function cycleValue(current: EntryValue | null): EntryValue | null {
   return null
 }
 
+const FREQ_LABELS = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly' }
+
 export default function BehaviorRow({
   behavior, entries, comments, compliancePercent,
   onCellTap, onCellLongPress, onEditBehavior,
   reorderMode, onMoveUp, onMoveDown, isFirst, isLast,
 }: BehaviorRowProps) {
-  const today = useMemo(() => {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    return d
-  }, [])
+  const [offset, setOffset] = useState(0)
+  const count = getDefaultCount(behavior.frequency)
 
-  const occurrences = useMemo(() =>
-    getNextOccurrences(
-      today, 4,
-      behavior.repeat_unit ?? 'day', behavior.repeat_interval ?? 1,
-      behavior.days_of_week, behavior.monthly_pattern
-    ),
-    [today, behavior]
+  const cells = useMemo(
+    () => getPeriodCells(behavior.frequency, offset, count),
+    [behavior.frequency, offset, count]
   )
 
   const pct = compliancePercent != null ? Math.round(compliancePercent) : null
@@ -71,63 +65,67 @@ export default function BehaviorRow({
         )}
       </div>
 
-      {/* Col 2: Task description (wrapping) */}
+      {/* Col 2: Task description */}
       <div className="sticky left-9 z-10 bg-white flex items-center min-w-[100px] max-w-[100px] px-2 py-1.5 border-r border-gray-100">
-        <div className="min-w-0">
-          <p className="text-xs leading-tight text-gray-800 break-words">
-            {behavior.is_new && (
-              <span className="inline-block bg-blue-100 text-blue-700 text-[8px] font-medium px-0.5 rounded mr-0.5">NEW</span>
-            )}
-            {behavior.name}
-          </p>
-        </div>
+        <p className="text-xs leading-tight text-gray-800 break-words min-w-0">{behavior.name}</p>
       </div>
 
-      {/* Col 3: Frequency */}
-      <div className="sticky left-[136px] z-10 bg-white flex items-center w-24 min-w-[6rem] px-1.5 py-1 border-r border-gray-100">
-        <FrequencyDisplay
-          repeatInterval={behavior.repeat_interval ?? 1}
-          repeatUnit={behavior.repeat_unit ?? 'day'}
-          daysOfWeek={behavior.days_of_week}
-          monthlyPattern={behavior.monthly_pattern}
-        />
+      {/* Col 3: Frequency label */}
+      <div className="sticky left-[136px] z-10 bg-white flex items-center w-16 min-w-[4rem] px-1.5 py-1 border-r border-gray-100">
+        <span className="text-[10px] text-gray-500 font-medium">{FREQ_LABELS[behavior.frequency]}</span>
       </div>
 
-      {/* Col 4: 4-week compliance % */}
-      <div className="sticky left-[232px] z-10 bg-white flex items-center justify-center w-10 min-w-[2.5rem] border-r border-gray-100">
+      {/* Col 4: 12-occurrence compliance % */}
+      <div className="sticky left-[200px] z-10 bg-white flex items-center justify-center w-10 min-w-[2.5rem] border-r border-gray-100">
         <span className={`text-[10px] font-bold ${pctColor}`}>
           {pct != null ? `${pct}%` : '—'}
         </span>
       </div>
 
-      {/* Col 5: Next 4 occurrence cells with individual headers */}
-      <div className="flex items-stretch">
-        {occurrences.map(date => {
-          const dateStr = formatDate(date)
-          const key = `${behavior.id}_${dateStr}`
-          const entry = entries.get(key)
-          const comment = comments.get(key)
-          const { dayLetter, dateLabel } = formatOccurrenceHeader(date)
+      {/* Col 5: Period cells with scroll arrows */}
+      <div className="flex items-center">
+        <button
+          onClick={() => setOffset(o => o - count)}
+          className="p-0.5 text-gray-300 hover:text-gray-600 shrink-0"
+        >
+          <ChevronLeft size={14} />
+        </button>
 
-          return (
-            <div key={dateStr} className="flex flex-col items-center px-0.5 py-1">
-              <span className={`text-[8px] font-bold leading-none ${checkIsToday(date) ? 'text-blue-600' : 'text-gray-400'}`}>
-                {dayLetter}
-              </span>
-              <span className={`text-[7px] leading-none mb-0.5 ${checkIsToday(date) ? 'text-blue-600' : 'text-gray-400'}`}>
-                {dateLabel}
-              </span>
-              <DayCell
-                value={entry?.value ?? null}
-                hasComment={!!comment}
-                isToday={checkIsToday(date)}
-                isApplicable={true}
-                onTap={() => onCellTap(behavior.id, dateStr, entry?.value ?? null)}
-                onLongPress={() => onCellLongPress(behavior.id, dateStr)}
-              />
-            </div>
-          )
-        })}
+        <div className="flex items-stretch">
+          {cells.map(date => {
+            const dateStr = formatDate(date)
+            const key = `${behavior.id}_${dateStr}`
+            const entry = entries.get(key)
+            const comment = comments.get(key)
+            const { top, bottom } = getCellLabel(date, behavior.frequency)
+
+            return (
+              <div key={dateStr} className="flex flex-col items-center px-0.5 py-1">
+                <span className={`text-[7px] leading-none ${checkIsToday(date) ? 'text-blue-600' : 'text-gray-400'}`}>
+                  {top}
+                </span>
+                <span className={`text-[9px] font-medium leading-none mb-0.5 ${checkIsToday(date) ? 'text-blue-600' : 'text-gray-500'}`}>
+                  {bottom}
+                </span>
+                <DayCell
+                  value={entry?.value ?? null}
+                  hasComment={!!comment}
+                  isToday={checkIsToday(date)}
+                  isApplicable={true}
+                  onTap={() => onCellTap(behavior.id, dateStr, entry?.value ?? null)}
+                  onLongPress={() => onCellLongPress(behavior.id, dateStr)}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        <button
+          onClick={() => setOffset(o => o + count)}
+          className="p-0.5 text-gray-300 hover:text-gray-600 shrink-0"
+        >
+          <ChevronRight size={14} />
+        </button>
       </div>
     </div>
   )

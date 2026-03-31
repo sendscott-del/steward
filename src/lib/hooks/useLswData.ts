@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { formatDate, getNextOccurrences, prevWeek, getWeekStart, getWeekDates, matchesRecurrence } from '@/lib/dates'
+import { formatDate, getPeriodCells, getDefaultCount, getLast12Dates } from '@/lib/dates'
 import type { Category, Behavior, Entry, CellComment, EntryValue } from '@/lib/types'
 
 interface LswData {
@@ -35,7 +35,6 @@ export function useLswData(userId: string | undefined): LswData {
     if (!userId) return
     setLoading(true)
 
-    // Fetch categories and behaviors first
     const [catRes, activeBehRes, archivedBehRes] = await Promise.all([
       supabase.from('lsw_categories').select('*').eq('user_id', userId).order('sort_order'),
       supabase.from('lsw_behaviors').select('*').eq('user_id', userId).eq('is_archived', false).order('sort_order'),
@@ -50,33 +49,19 @@ export function useLswData(userId: string | undefined): LswData {
     setBehaviors(activeBehaviors)
     setArchivedBehaviors(archived)
 
-    // Collect all dates we need: next 4 occurrences per behavior + 4 weeks back for compliance
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
+    // Collect all dates we need across all behaviors
     const allDatesSet = new Set<string>()
-
-    // Next 4 occurrences per behavior
     for (const beh of activeBehaviors) {
-      const occ = getNextOccurrences(
-        today, 4,
-        beh.repeat_unit ?? 'day', beh.repeat_interval ?? 1,
-        beh.days_of_week, beh.monthly_pattern
-      )
-      for (const d of occ) allDatesSet.add(formatDate(d))
-    }
-
-    // 4 weeks back for compliance
-    let ws = getWeekStart(today)
-    for (let i = 0; i < 4; i++) {
-      const weekDates = getWeekDates(ws)
-      for (const d of weekDates) allDatesSet.add(formatDate(d))
-      ws = prevWeek(ws)
+      // Visible cells (default view)
+      const cells = getPeriodCells(beh.frequency, 0, getDefaultCount(beh.frequency))
+      for (const d of cells) allDatesSet.add(formatDate(d))
+      // Last 12 for compliance
+      const past = getLast12Dates(beh.frequency)
+      for (const d of past) allDatesSet.add(formatDate(d))
     }
 
     const allDateStrings = [...allDatesSet]
 
-    // Fetch entries and comments for all needed dates
     const [entRes, comRes] = await Promise.all([
       allDateStrings.length > 0
         ? supabase.from('lsw_entries').select('*').eq('user_id', userId).in('entry_date', allDateStrings)
@@ -94,25 +79,15 @@ export function useLswData(userId: string | undefined): LswData {
     for (const c of (comRes.data ?? []) as CellComment[]) commentMap.set(entryKey(c.behavior_id, c.entry_date), c)
     setComments(commentMap)
 
-    // Calculate 4-week compliance per behavior
+    // Compliance: last 12 occurrences per behavior
     const compMap = new Map<string, number | null>()
-    ws = getWeekStart(today)
-    const fourWeekDates: Date[] = []
-    for (let i = 0; i < 4; i++) {
-      fourWeekDates.push(...getWeekDates(ws))
-      ws = prevWeek(ws)
-    }
-
     for (const beh of activeBehaviors) {
-      const applicable = fourWeekDates.filter(d =>
-        matchesRecurrence(d, beh.repeat_unit ?? 'day', beh.repeat_interval ?? 1, beh.days_of_week ?? undefined, beh.monthly_pattern ?? undefined)
-      )
-      if (applicable.length === 0) { compMap.set(beh.id, null); continue }
+      const pastDates = getLast12Dates(beh.frequency)
       let completed = 0
-      for (const d of applicable) {
+      for (const d of pastDates) {
         if (entryMap.get(entryKey(beh.id, formatDate(d)))?.value === 'y') completed++
       }
-      compMap.set(beh.id, (completed / applicable.length) * 100)
+      compMap.set(beh.id, pastDates.length > 0 ? (completed / pastDates.length) * 100 : null)
     }
     setComplianceMap(compMap)
 

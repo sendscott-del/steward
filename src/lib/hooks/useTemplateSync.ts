@@ -94,10 +94,7 @@ export function useTemplateSync(userId: string | undefined) {
               user_id: userId,
               category_id: newCat.id,
               name: b.name,
-              repeat_interval: b.repeat_interval ?? 1,
-              repeat_unit: b.repeat_unit ?? 'day',
-              days_of_week: b.days_of_week,
-              monthly_pattern: b.monthly_pattern,
+              frequency: b.frequency ?? 'weekly',
               sort_order: i,
             }))
             await supabase.from('lsw_behaviors').insert(behaviorInserts)

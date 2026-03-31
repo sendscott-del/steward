@@ -1,244 +1,97 @@
-import { startOfWeek, addDays, addWeeks, subWeeks, addMonths, format, isSameDay, getDate, getDay } from 'date-fns'
-import type { MonthlyPattern, RepeatUnit } from '@/lib/types'
-
-export function getWeekStart(date: Date): Date {
-  return startOfWeek(date, { weekStartsOn: 0 })
-}
-
-export function getWeekDates(weekStart: Date): Date[] {
-  return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-}
-
-export function nextWeek(weekStart: Date): Date {
-  return addWeeks(weekStart, 1)
-}
-
-export function prevWeek(weekStart: Date): Date {
-  return subWeeks(weekStart, 1)
-}
-
-export function getMonthForWeek(weekStart: Date): { month: string; year: number } {
-  const thursday = addDays(weekStart, 4)
-  return { month: format(thursday, 'MMMM'), year: thursday.getFullYear() }
-}
-
-export function getMonthWeeks(year: number, month: number): Date[] {
-  const firstOfMonth = new Date(year, month, 1)
-  const lastOfMonth = new Date(year, month + 1, 0)
-  const firstWeekStart = getWeekStart(firstOfMonth)
-  const lastWeekStart = getWeekStart(lastOfMonth)
-  const weeks: Date[] = []
-  let current = firstWeekStart
-  while (current <= lastWeekStart) {
-    weeks.push(current)
-    current = addWeeks(current, 1)
-  }
-  return weeks
-}
-
-export function getWeekOfMonth(weekStart: Date): { weekNum: number; totalWeeks: number } {
-  const { year } = getMonthForWeek(weekStart)
-  const thursday = addDays(weekStart, 4)
-  const monthIndex = thursday.getMonth()
-  const weeks = getMonthWeeks(year, monthIndex)
-  const weekNum = weeks.findIndex(w => w.getTime() === weekStart.getTime()) + 1
-  return { weekNum: weekNum || 1, totalWeeks: weeks.length }
-}
+import { startOfWeek, addWeeks, subWeeks, addMonths, subMonths, format, isSameDay } from 'date-fns'
+import type { Frequency } from '@/lib/types'
 
 export function formatDate(date: Date): string {
   return format(date, 'yyyy-MM-dd')
-}
-
-export function formatDayHeader(date: Date): { letter: string; number: string } {
-  const letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-  return { letter: letters[date.getDay()], number: format(date, 'd') }
-}
-
-export function formatWeekRange(dates: Date[]): string {
-  if (dates.length === 0) return ''
-  return `${format(dates[0], 'MMM d')} - ${format(dates[dates.length - 1], 'MMM d')}`
 }
 
 export function isToday(date: Date): boolean {
   return isSameDay(date, new Date())
 }
 
-// Check if a date matches a recurrence pattern
-export function matchesRecurrence(
-  date: Date,
-  repeatUnit: RepeatUnit,
-  repeatInterval: number,
-  daysOfWeek?: number[],
-  monthlyPattern?: MonthlyPattern
-): boolean {
-  if (repeatUnit === 'day') {
-    // Every N days — for the grid, we show it on all days (interval tracking is informational)
-    return repeatInterval === 1 ? true : true // show on all days, user decides when to mark
-  }
-
-  if (repeatUnit === 'week') {
-    if (!daysOfWeek || daysOfWeek.length === 0) return true
-    return daysOfWeek.includes(getDay(date))
-  }
-
-  if (repeatUnit === 'month') {
-    if (!monthlyPattern) return false
-    if (monthlyPattern.type === 'day_of_month' && monthlyPattern.day != null) {
-      return getDate(date) === monthlyPattern.day
-    }
-    if (monthlyPattern.type === 'nth_weekday' && monthlyPattern.nth != null && monthlyPattern.weekday != null) {
-      if (getDay(date) !== monthlyPattern.weekday) return false
-      const nth = Math.ceil(getDate(date) / 7)
-      return nth === monthlyPattern.nth
-    }
-  }
-
-  return true
+// Get the Sunday that starts the week containing a date
+export function getWeekStart(date: Date): Date {
+  return startOfWeek(date, { weekStartsOn: 0 })
 }
 
-// Count applicable days in a date range
-export function countApplicableDays(
-  dates: Date[],
-  repeatUnit: RepeatUnit,
-  repeatInterval: number,
-  daysOfWeek?: number[],
-  monthlyPattern?: MonthlyPattern
-): number {
-  return dates.filter(d => matchesRecurrence(d, repeatUnit, repeatInterval, daysOfWeek, monthlyPattern)).length
+// --- Period date generation ---
+
+// Weekly: returns Sundays (week-start dates)
+export function getWeeklyCells(startOffset: number, count: number): Date[] {
+  const baseWeek = getWeekStart(new Date())
+  const start = addWeeks(baseWeek, startOffset)
+  return Array.from({ length: count }, (_, i) => addWeeks(start, i))
 }
 
-// Format frequency for display in the grid
-export function formatFrequency(
-  repeatInterval: number,
-  repeatUnit: RepeatUnit,
-  daysOfWeek?: number[] | null,
-  monthlyPattern?: MonthlyPattern | null
-): string {
-  const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-  const ordinals = ['', '1st', '2nd', '3rd', '4th', 'Last']
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-  if (repeatUnit === 'day') {
-    return repeatInterval === 1 ? 'Daily' : `Every ${repeatInterval} days`
-  }
-
-  if (repeatUnit === 'week') {
-    const days = daysOfWeek && daysOfWeek.length > 0
-      ? daysOfWeek.map(d => dayLetters[d]).join('')
-      : 'All'
-    if (repeatInterval === 1) return days
-    return `Every ${repeatInterval} wks · ${days}`
-  }
-
-  if (repeatUnit === 'month') {
-    let pattern = ''
-    if (monthlyPattern?.type === 'day_of_month' && monthlyPattern.day != null) {
-      pattern = `Day ${monthlyPattern.day}`
-    } else if (monthlyPattern?.type === 'nth_weekday' && monthlyPattern.nth != null && monthlyPattern.weekday != null) {
-      pattern = `${ordinals[monthlyPattern.nth]} ${dayNames[monthlyPattern.weekday]}`
-    }
-    if (repeatInterval === 1) return pattern || 'Monthly'
-    return `Every ${repeatInterval} mo · ${pattern}`
-  }
-
-  return ''
+// Monthly: returns 1st of each month
+export function getMonthlyCells(startOffset: number, count: number): Date[] {
+  const now = new Date()
+  const baseMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const start = addMonths(baseMonth, startOffset)
+  return Array.from({ length: count }, (_, i) => addMonths(start, i))
 }
 
-// Get the next N occurrences of a behavior starting from a given date
-export function getNextOccurrences(
-  fromDate: Date,
-  count: number,
-  repeatUnit: RepeatUnit,
-  repeatInterval: number,
-  daysOfWeek?: number[] | null,
-  monthlyPattern?: MonthlyPattern | null
-): Date[] {
-  const results: Date[] = []
-  const maxSearch = 365 // safety limit
-
-  if (repeatUnit === 'day') {
-    // Every N days from today
-    let d = fromDate
-    for (let i = 0; i < count; i++) {
-      results.push(d)
-      d = addDays(d, repeatInterval)
-    }
-    return results
-  }
-
-  if (repeatUnit === 'week') {
-    const days = daysOfWeek && daysOfWeek.length > 0 ? daysOfWeek : [0, 1, 2, 3, 4, 5, 6]
-    let d = fromDate
-    let searched = 0
-    while (results.length < count && searched < maxSearch) {
-      if (days.includes(getDay(d))) {
-        results.push(d)
-      }
-      d = addDays(d, 1)
-      searched++
-      // For intervals > 1 week, skip ahead after completing a week's worth of applicable days
-      // Simple approach: check every day but only within applicable week cycles
-    }
-    // If interval > 1, filter to only keep every Nth week's occurrences
-    if (repeatInterval > 1 && results.length > 0) {
-      const firstWeekStart = getWeekStart(results[0])
-      return results.filter(date => {
-        const weekStart = getWeekStart(date)
-        const weeksDiff = Math.round((weekStart.getTime() - firstWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000))
-        return weeksDiff % repeatInterval === 0
-      }).slice(0, count)
-    }
-    return results
-  }
-
-  if (repeatUnit === 'month') {
-    let monthDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1)
-    let searched = 0
-
-    while (results.length < count && searched < 48) { // 48 months max
-      const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate()
-
-      if (monthlyPattern?.type === 'day_of_month' && monthlyPattern.day != null) {
-        const targetDay = Math.min(monthlyPattern.day, daysInMonth)
-        const candidate = new Date(monthDate.getFullYear(), monthDate.getMonth(), targetDay)
-        if (candidate >= fromDate) {
-          results.push(candidate)
-        }
-      } else if (monthlyPattern?.type === 'nth_weekday' && monthlyPattern.nth != null && monthlyPattern.weekday != null) {
-        // Find the nth weekday in this month
-        let dayCount = 0
-        for (let d = 1; d <= daysInMonth; d++) {
-          const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), d)
-          if (getDay(date) === monthlyPattern.weekday) {
-            dayCount++
-            if (dayCount === monthlyPattern.nth || (monthlyPattern.nth === 5 && d + 7 > daysInMonth)) {
-              if (date >= fromDate) {
-                results.push(date)
-              }
-              break
-            }
-          }
-        }
-      } else {
-        // No pattern specified, use first of month
-        const candidate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
-        if (candidate >= fromDate) results.push(candidate)
-      }
-
-      monthDate = addMonths(monthDate, repeatInterval)
-      searched++
-    }
-    return results.slice(0, count)
-  }
-
-  return results
+// Quarterly: returns 1st of quarter months (Jan, Apr, Jul, Oct)
+export function getQuarterlyCells(startOffset: number, count: number): Date[] {
+  const now = new Date()
+  const currentQuarter = Math.floor(now.getMonth() / 3)
+  const baseQuarter = new Date(now.getFullYear(), currentQuarter * 3, 1)
+  const start = addMonths(baseQuarter, startOffset * 3)
+  return Array.from({ length: count }, (_, i) => addMonths(start, i * 3))
 }
 
-// Format a date for the occurrence cell header
-export function formatOccurrenceHeader(date: Date): { dayLetter: string; dateLabel: string } {
-  const letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+// Get period cells based on frequency
+export function getPeriodCells(frequency: Frequency, offset: number, count: number): Date[] {
+  if (frequency === 'weekly') return getWeeklyCells(offset, count)
+  if (frequency === 'monthly') return getMonthlyCells(offset, count)
+  return getQuarterlyCells(offset, count)
+}
+
+// Default visible count per frequency
+export function getDefaultCount(frequency: Frequency): number {
+  if (frequency === 'weekly') return 4
+  if (frequency === 'monthly') return 12
+  return 4
+}
+
+// --- Cell labels ---
+
+export function getCellLabel(date: Date, frequency: Frequency): { top: string; bottom: string } {
+  if (frequency === 'weekly') {
+    return {
+      top: format(date, 'MMM'),
+      bottom: format(date, 'd'),
+    }
+  }
+  if (frequency === 'monthly') {
+    return {
+      top: format(date, 'yyyy'),
+      bottom: format(date, 'MMM'),
+    }
+  }
+  // quarterly
+  const q = Math.floor(date.getMonth() / 3) + 1
   return {
-    dayLetter: letters[getDay(date)],
-    dateLabel: format(date, 'MMM d'),
+    top: format(date, 'yyyy'),
+    bottom: `Q${q}`,
   }
+}
+
+// --- Compliance: last 12 occurrences ---
+
+export function getLast12Dates(frequency: Frequency): Date[] {
+  if (frequency === 'weekly') {
+    const baseWeek = getWeekStart(new Date())
+    return Array.from({ length: 12 }, (_, i) => subWeeks(baseWeek, i + 1))
+  }
+  if (frequency === 'monthly') {
+    const now = new Date()
+    const baseMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    return Array.from({ length: 12 }, (_, i) => subMonths(baseMonth, i + 1))
+  }
+  // quarterly
+  const now = new Date()
+  const currentQ = Math.floor(now.getMonth() / 3)
+  const baseQ = new Date(now.getFullYear(), currentQ * 3, 1)
+  return Array.from({ length: 12 }, (_, i) => subMonths(baseQ, (i + 1) * 3))
 }

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.6.0'
+export const APP_VERSION = '1.7.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.7.0',
+    date: '2026-03-30',
+    enhancements: [
+      'Simplified frequency: just Weekly, Monthly, or Quarterly',
+      'Weekly shows next 4 Sundays as cells, Monthly shows 12 months, Quarterly shows 4 quarters',
+      'Per-row scroll arrows to navigate forward/backward through occurrences',
+      'Compliance % based on last 12 occurrences (12% column)',
+      'Reorder mode stays open until toggled off — move items multiple positions without re-clicking',
+      'Removed NEW badge, complex recurrence settings, and frequency display widget',
+    ],
+    bugFixes: [],
+  },
   {
     version: '1.6.0',
     date: '2026-03-30',

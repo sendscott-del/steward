@@ -75,14 +75,14 @@ export default function CategorySection({
             <div className="sticky left-9 z-10 bg-white min-w-[100px] max-w-[100px] border-r border-gray-100 px-2 py-1">
               <span className="text-[9px] text-gray-400 font-medium">TASK</span>
             </div>
-            <div className="sticky left-[136px] z-10 bg-white w-24 min-w-[6rem] border-r border-gray-100 px-1.5 py-1">
-              <span className="text-[9px] text-gray-400 font-medium">FREQUENCY</span>
+            <div className="sticky left-[136px] z-10 bg-white w-16 min-w-[4rem] border-r border-gray-100 px-1.5 py-1">
+              <span className="text-[9px] text-gray-400 font-medium">FREQ</span>
             </div>
-            <div className="sticky left-[232px] z-10 bg-white w-10 min-w-[2.5rem] border-r border-gray-100 flex items-center justify-center py-1">
-              <span className="text-[9px] text-gray-400 font-medium">4W%</span>
+            <div className="sticky left-[200px] z-10 bg-white w-10 min-w-[2.5rem] border-r border-gray-100 flex items-center justify-center py-1">
+              <span className="text-[9px] text-gray-400 font-medium">12%</span>
             </div>
             <div className="px-1 py-1">
-              <span className="text-[9px] text-gray-400 font-medium">NEXT OCCURRENCES</span>
+              <span className="text-[9px] text-gray-400 font-medium">OCCURRENCES</span>
             </div>
           </div>
 

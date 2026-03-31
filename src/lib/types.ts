@@ -1,12 +1,5 @@
 export type EntryValue = 'y' | 'n'
-export type RepeatUnit = 'day' | 'week' | 'month'
-
-export interface MonthlyPattern {
-  type: 'day_of_month' | 'nth_weekday'
-  day?: number // for day_of_month: 1-31
-  nth?: number // for nth_weekday: 1-5 (1st, 2nd, 3rd, 4th, 5th/Last)
-  weekday?: number // for nth_weekday: 0=Sun, 6=Sat
-}
+export type Frequency = 'weekly' | 'monthly' | 'quarterly'
 
 export interface Category {
   id: string
@@ -20,11 +13,7 @@ export interface Behavior {
   user_id: string
   category_id: string
   name: string
-  repeat_interval: number // e.g., 1, 2, 3
-  repeat_unit: RepeatUnit // day, week, month
-  days_of_week: number[] | null // for week: which days (0=Sun, 6=Sat)
-  monthly_pattern: MonthlyPattern | null // for month
-  is_new: boolean
+  frequency: Frequency
   is_archived: boolean
   sort_order: number
 }
@@ -84,10 +73,7 @@ export interface TemplateBehavior {
   id: string
   category_id: string
   name: string
-  repeat_interval: number
-  repeat_unit: RepeatUnit
-  days_of_week: number[] | null
-  monthly_pattern: MonthlyPattern | null
+  frequency: Frequency
   sort_order: number
 }
 
