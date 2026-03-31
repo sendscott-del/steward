@@ -4,6 +4,19 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
+async function checkAdmin(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('lsw_admins')
+      .select('user_id')
+      .eq('user_id', userId)
+    if (error) return false
+    return (data ?? []).length > 0
+  } catch {
+    return false
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -21,20 +34,14 @@ export function useAuth() {
       setUser(currentUser)
 
       if (currentUser) {
-        const { data } = await supabase
-          .from('lsw_admins')
-          .select('user_id')
-          .eq('user_id', currentUser.id)
-
-        if (!mounted) return
-        setIsAdmin((data ?? []).length > 0)
-        lastCheckedId.current = currentUser.id
-      } else {
-        setIsAdmin(false)
-        lastCheckedId.current = null
+        const admin = await checkAdmin(currentUser.id)
+        if (mounted) {
+          setIsAdmin(admin)
+          lastCheckedId.current = currentUser.id
+        }
       }
 
-      setLoading(false)
+      if (mounted) setLoading(false)
     }
 
     init()
@@ -44,16 +51,12 @@ export function useAuth() {
       if (!mounted) return
       setUser(currentUser)
 
-      // Only re-check admin if user changed
       if (currentUser && currentUser.id !== lastCheckedId.current) {
-        const { data } = await supabase
-          .from('lsw_admins')
-          .select('user_id')
-          .eq('user_id', currentUser.id)
-
-        if (!mounted) return
-        setIsAdmin((data ?? []).length > 0)
-        lastCheckedId.current = currentUser.id
+        const admin = await checkAdmin(currentUser.id)
+        if (mounted) {
+          setIsAdmin(admin)
+          lastCheckedId.current = currentUser.id
+        }
       } else if (!currentUser) {
         setIsAdmin(false)
         lastCheckedId.current = null
