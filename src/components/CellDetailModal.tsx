@@ -17,6 +17,7 @@ const VALUE_OPTIONS: { value: EntryValue | null; label: string; style: string }[
   { value: null, label: 'Empty', style: 'bg-gray-100 text-gray-600' },
   { value: 'y', label: 'Yes', style: 'bg-green-500 text-white' },
   { value: 'n', label: 'No', style: 'bg-red-500 text-white' },
+  { value: 'na', label: 'N/A', style: 'bg-gray-400 text-white' },
 ]
 
 export default function CellDetailModal({

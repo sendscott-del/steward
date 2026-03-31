@@ -25,6 +25,7 @@ interface BehaviorRowProps {
 function cycleValue(current: EntryValue | null): EntryValue | null {
   if (!current) return 'y'
   if (current === 'y') return 'n'
+  if (current === 'n') return 'na'
   return null
 }
 

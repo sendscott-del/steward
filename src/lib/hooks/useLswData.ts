@@ -88,10 +88,14 @@ export function useLswData(userId: string | undefined): LswData {
       const pastDates = getLast12Dates(beh.frequency, beh.interval ?? 1, beh.anchor_date)
       if (pastDates.length === 0) { compMap.set(beh.id, null); continue }
       let completed = 0
+      let applicable = 0
       for (const d of pastDates) {
-        if (entries.get(entryKey(beh.id, formatDate(d)))?.value === 'y') completed++
+        const entry = entries.get(entryKey(beh.id, formatDate(d)))
+        if (entry?.value === 'na') continue // NA doesn't count in denominator
+        applicable++
+        if (entry?.value === 'y') completed++
       }
-      compMap.set(beh.id, (completed / pastDates.length) * 100)
+      compMap.set(beh.id, applicable > 0 ? (completed / applicable) * 100 : null)
     }
     return compMap
   }, [behaviors, entries])

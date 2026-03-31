@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.8.0'
+export const APP_VERSION = '1.9.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.9.0',
+    date: '2026-03-30',
+    enhancements: [
+      'N/A cell status — tap through Y → N → NA → empty to mark a cell as not applicable (e.g., holiday, skip week)',
+      'N/A cells shown in gray and excluded from compliance % denominator',
+      'N/A option available in the cell detail modal (long-press/right-click)',
+    ],
+    bugFixes: [],
+  },
   {
     version: '1.8.0',
     date: '2026-03-30',

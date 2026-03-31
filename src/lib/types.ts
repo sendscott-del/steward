@@ -1,4 +1,4 @@
-export type EntryValue = 'y' | 'n'
+export type EntryValue = 'y' | 'n' | 'na'
 export type Frequency = 'weekly' | 'monthly' | 'quarterly'
 
 export interface Category {

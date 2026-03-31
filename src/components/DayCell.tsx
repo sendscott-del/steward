@@ -15,11 +15,13 @@ interface DayCellProps {
 const VALUE_STYLES: Record<string, string> = {
   y: 'bg-green-500 text-white',
   n: 'bg-red-500 text-white',
+  na: 'bg-gray-300 text-white',
 }
 
 const VALUE_LABELS: Record<string, string> = {
   y: 'Y',
   n: 'N',
+  na: 'NA',
 }
 
 export default function DayCell({ value, hasComment, isToday, isApplicable, onTap, onLongPress }: DayCellProps) {
