@@ -13,6 +13,7 @@ interface CategorySectionProps {
   weekDates: Date[]
   entries: Map<string, Entry>
   comments: Map<string, CellComment>
+  complianceMap: Map<string, number | null> // behaviorId -> 4-week %
   onCellTap: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
   onCellLongPress: (behaviorId: string, date: string) => void
   onAddBehavior: (categoryId: string) => void
@@ -21,17 +22,8 @@ interface CategorySectionProps {
 }
 
 export default function CategorySection({
-  category,
-  behaviors,
-  archivedBehaviors,
-  weekDates,
-  entries,
-  comments,
-  onCellTap,
-  onCellLongPress,
-  onAddBehavior,
-  onEditBehavior,
-  onEditCategory,
+  category, behaviors, archivedBehaviors, weekDates, entries, comments, complianceMap,
+  onCellTap, onCellLongPress, onAddBehavior, onEditBehavior, onEditCategory,
 }: CategorySectionProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
@@ -40,39 +32,38 @@ export default function CategorySection({
     <div className="mb-2">
       {/* Category header */}
       <div className="flex items-center bg-gray-50 border-b border-gray-200 px-3 py-2">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-1 flex-1 min-w-0"
-        >
+        <button onClick={() => setCollapsed(!collapsed)} className="flex items-center gap-1 flex-1 min-w-0">
           {collapsed ? <ChevronRight size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-          <span className="text-sm font-semibold text-gray-700 truncate">
-            {category.name}
-          </span>
-          <span className="text-xs text-gray-400 ml-1">
-            ({behaviors.length})
-          </span>
+          <span className="text-sm font-semibold text-gray-700 truncate">{category.name}</span>
+          <span className="text-xs text-gray-400 ml-1">({behaviors.length})</span>
         </button>
-        <button
-          onClick={() => onEditCategory(category.id)}
-          className="p-1 text-gray-400 hover:text-gray-600 mr-1"
-          title="Edit category"
-        >
+        <button onClick={() => onEditCategory(category.id)} className="p-1 text-gray-400 hover:text-gray-600 mr-1" title="Edit category">
           <Pencil size={14} />
         </button>
-        <button
-          onClick={() => onAddBehavior(category.id)}
-          className="p-1 text-gray-400 hover:text-blue-600"
-          title="Add behavior"
-        >
+        <button onClick={() => onAddBehavior(category.id)} className="p-1 text-gray-400 hover:text-blue-600" title="Add behavior">
           <Plus size={16} />
         </button>
       </div>
 
       {!collapsed && (
         <div className="overflow-x-auto">
-          {/* Day headers */}
+          {/* Column headers */}
           <div className="flex items-stretch">
-            <div className="sticky left-0 z-10 bg-white min-w-[140px] max-w-[140px] border-r border-gray-100" />
+            {/* Edit col */}
+            <div className="sticky left-0 z-10 bg-white w-9 min-w-[2.25rem] border-r border-gray-100" />
+            {/* Task col */}
+            <div className="sticky left-9 z-10 bg-white min-w-[100px] max-w-[100px] border-r border-gray-100 px-2 py-1">
+              <span className="text-[9px] text-gray-400 font-medium">TASK</span>
+            </div>
+            {/* Freq col */}
+            <div className="sticky left-[136px] z-10 bg-white w-14 min-w-[3.5rem] border-r border-gray-100 px-1 py-1">
+              <span className="text-[9px] text-gray-400 font-medium">FREQ</span>
+            </div>
+            {/* % col */}
+            <div className="sticky left-[192px] z-10 bg-white w-10 min-w-[2.5rem] border-r border-gray-100 flex items-center justify-center py-1">
+              <span className="text-[9px] text-gray-400 font-medium">4W%</span>
+            </div>
+            {/* Day headers */}
             <div className="flex items-center gap-1 px-1 py-1">
               {weekDates.map(date => {
                 const { letter, number } = formatDayHeader(date)
@@ -100,6 +91,7 @@ export default function CategorySection({
               weekDates={weekDates}
               entries={entries}
               comments={comments}
+              compliancePercent={complianceMap.get(behavior.id) ?? null}
               onCellTap={onCellTap}
               onCellLongPress={onCellLongPress}
               onEditBehavior={onEditBehavior}
@@ -109,19 +101,14 @@ export default function CategorySection({
           {behaviors.length === 0 && (
             <div className="px-4 py-6 text-center text-sm text-gray-400">
               No behaviors yet.{' '}
-              <button onClick={() => onAddBehavior(category.id)} className="text-blue-600 hover:underline">
-                Add one
-              </button>
+              <button onClick={() => onAddBehavior(category.id)} className="text-blue-600 hover:underline">Add one</button>
             </div>
           )}
 
           {/* Archived toggle */}
           {archivedBehaviors.length > 0 && (
             <div className="px-3 py-2">
-              <button
-                onClick={() => setShowArchived(!showArchived)}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={() => setShowArchived(!showArchived)} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600">
                 <Archive size={12} />
                 {showArchived ? 'Hide' : 'Show'} {archivedBehaviors.length} archived
               </button>
@@ -134,6 +121,7 @@ export default function CategorySection({
                       weekDates={weekDates}
                       entries={entries}
                       comments={comments}
+                      compliancePercent={null}
                       onCellTap={onCellTap}
                       onCellLongPress={onCellLongPress}
                       onEditBehavior={onEditBehavior}

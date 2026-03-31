@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.4.0'
+export const APP_VERSION = '1.5.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.5.0',
+    date: '2026-03-30',
+    enhancements: [
+      'Google Tasks-style frequency picker: "Repeats every [N] days/weeks/months" with day-of-week and monthly pattern options',
+      'Redesigned grid layout: Edit | Task (wrapping text) | Frequency | 4-week compliance % | Day cells',
+      '4-week rolling compliance percentage per behavior',
+      'Frequency displayed inline in compact format (e.g., "MTW", "1st Sun", "Every 2 wks")',
+      'Simplified to single weekly view — removed daily/monthly view toggle',
+    ],
+    bugFixes: [
+      'Fixed admin page loading race condition',
+    ],
+  },
   {
     version: '1.4.0',
     date: '2026-03-30',
