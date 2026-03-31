@@ -8,6 +8,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminChecked, setAdminChecked] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -27,14 +28,17 @@ export function useAuth() {
   useEffect(() => {
     if (!user) {
       setIsAdmin(false)
+      setAdminChecked(true)
       return
     }
+    setAdminChecked(false)
     supabase
       .from('lsw_admins')
       .select('user_id')
       .eq('user_id', user.id)
       .then(({ data }) => {
         setIsAdmin((data ?? []).length > 0)
+        setAdminChecked(true)
       })
   }, [user])
 
@@ -42,5 +46,5 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  return { user, loading, isAdmin, signOut }
+  return { user, loading: loading || !adminChecked, isAdmin, signOut }
 }
