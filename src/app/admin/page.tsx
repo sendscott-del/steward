@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Plus, X, Trash2, Users, FileText, Link2 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -17,18 +17,29 @@ export default function AdminPage() {
   const { user, loading: authLoading, isAdmin, adminLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<AdminTab>('templates')
 
-  useEffect(() => {
-    if (authLoading || adminLoading) return
-    if (!user) { router.push('/login'); return }
-    if (!isAdmin) { router.push('/'); return }
-  }, [user, authLoading, adminLoading, isAdmin, router])
-
+  // Show loading while auth or admin check in progress
   if (authLoading || adminLoading) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Loading...</div>
   }
 
-  if (!user || !isAdmin) {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Loading...</div>
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <p className="text-sm text-gray-500">Please log in first.</p>
+        <button onClick={() => router.push('/login')} className="text-sm text-blue-600 hover:underline">Go to Login</button>
+      </div>
+    )
+  }
+
+  // Not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <p className="text-sm text-gray-500">You don&apos;t have admin access.</p>
+        <button onClick={() => router.push('/')} className="text-sm text-blue-600 hover:underline">Back to Home</button>
+      </div>
+    )
   }
 
   return (
