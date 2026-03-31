@@ -1,73 +1,53 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
-
-async function checkAdmin(userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from('lsw_admins')
-      .select('user_id')
-      .eq('user_id', userId)
-    if (error) return false
-    return (data ?? []).length > 0
-  } catch {
-    return false
-  }
-}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const lastCheckedId = useRef<string | null>(null)
 
+  // Auth session — this controls the loading state
   useEffect(() => {
-    let mounted = true
-
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
-      const currentUser = session?.user ?? null
-
-      if (!mounted) return
-      setUser(currentUser)
-
-      if (currentUser) {
-        const admin = await checkAdmin(currentUser.id)
-        if (mounted) {
-          setIsAdmin(admin)
-          lastCheckedId.current = currentUser.id
-        }
-      }
-
-      if (mounted) setLoading(false)
-    }
-
-    init()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null
-      if (!mounted) return
-      setUser(currentUser)
-
-      if (currentUser && currentUser.id !== lastCheckedId.current) {
-        const admin = await checkAdmin(currentUser.id)
-        if (mounted) {
-          setIsAdmin(admin)
-          lastCheckedId.current = currentUser.id
-        }
-      } else if (!currentUser) {
-        setIsAdmin(false)
-        lastCheckedId.current = null
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
     })
 
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
+
+  // Admin check — runs in background, never blocks loading
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false)
+      return
+    }
+
+    let cancelled = false
+
+    supabase
+      .from('lsw_admins')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) {
+          setIsAdmin(false)
+        } else {
+          setIsAdmin((data ?? []).length > 0)
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [user?.id])
 
   const signOut = async () => {
     await supabase.auth.signOut()
