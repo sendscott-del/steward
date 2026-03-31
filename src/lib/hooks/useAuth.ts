@@ -8,8 +8,8 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminLoading, setAdminLoading] = useState(true)
 
-  // Auth session — this controls the loading state
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -24,13 +24,14 @@ export function useAuth() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Admin check — runs in background, never blocks loading
   useEffect(() => {
     if (!user) {
       setIsAdmin(false)
+      setAdminLoading(false)
       return
     }
 
+    setAdminLoading(true)
     let cancelled = false
 
     supabase
@@ -39,11 +40,8 @@ export function useAuth() {
       .eq('user_id', user.id)
       .then(({ data, error }) => {
         if (cancelled) return
-        if (error) {
-          setIsAdmin(false)
-        } else {
-          setIsAdmin((data ?? []).length > 0)
-        }
+        setIsAdmin(!error && (data ?? []).length > 0)
+        setAdminLoading(false)
       })
 
     return () => { cancelled = true }
@@ -53,5 +51,5 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  return { user, loading, isAdmin, signOut }
+  return { user, loading, isAdmin, adminLoading, signOut }
 }

@@ -14,44 +14,21 @@ type AdminTab = 'templates' | 'groups' | 'assign'
 
 export default function AdminPage() {
   const router = useRouter()
-  const { user, loading: authLoading, isAdmin } = useAuth()
+  const { user, loading: authLoading, isAdmin, adminLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<AdminTab>('templates')
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (authLoading) return
+    if (authLoading || adminLoading) return
+    if (!user) { router.push('/login'); return }
+    if (!isAdmin) { router.push('/'); return }
+  }, [user, authLoading, adminLoading, isAdmin, router])
 
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    // Give the admin check a moment to resolve, then show the page
-    // If not admin after the check, redirect
-    const timer = setTimeout(() => {
-      setReady(true)
-    }, 100)
-
-    if (isAdmin) {
-      setReady(true)
-      clearTimeout(timer)
-    }
-
-    return () => clearTimeout(timer)
-  }, [user, authLoading, isAdmin, router])
-
-  useEffect(() => {
-    if (ready && !isAdmin && !authLoading) {
-      router.push('/')
-    }
-  }, [ready, isAdmin, authLoading, router])
-
-  if (!ready || authLoading) {
+  if (authLoading || adminLoading) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Loading...</div>
   }
 
   if (!user || !isAdmin) {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Redirecting...</div>
+    return <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Loading...</div>
   }
 
   return (
