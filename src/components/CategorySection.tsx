@@ -32,21 +32,41 @@ export default function CategorySection({
   category, behaviors, archivedBehaviors, entries, comments, complianceMap,
   onCellTap, onCellLongPress, onAddBehavior, onEditBehavior, onEditCategory, onRefresh,
 }: CategorySectionProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const [showArchived, setShowArchived] = useState(false)
   const [reorderMode, setReorderMode] = useState(false)
+  const [localOrder, setLocalOrder] = useState<Behavior[] | null>(null)
   const { isDesktop } = useScreenSize()
 
-  async function handleMove(index: number, direction: -1 | 1) {
+  // Use local order while reordering, otherwise use prop
+  const displayBehaviors = localOrder ?? behaviors
+
+  function handleStartReorder() {
+    if (reorderMode) {
+      // Exiting reorder mode — save to DB
+      if (localOrder) {
+        localOrder.forEach((beh, i) => {
+          supabase.from('lsw_behaviors').update({ sort_order: i }).eq('id', beh.id)
+        })
+        onRefresh()
+      }
+      setLocalOrder(null)
+      setReorderMode(false)
+    } else {
+      setLocalOrder([...behaviors])
+      setReorderMode(true)
+    }
+  }
+
+  function handleMove(index: number, direction: -1 | 1) {
+    if (!localOrder) return
     const swapIndex = index + direction
-    if (swapIndex < 0 || swapIndex >= behaviors.length) return
-    const a = behaviors[index]
-    const b = behaviors[swapIndex]
-    await Promise.all([
-      supabase.from('lsw_behaviors').update({ sort_order: b.sort_order }).eq('id', a.id),
-      supabase.from('lsw_behaviors').update({ sort_order: a.sort_order }).eq('id', b.id),
-    ])
-    onRefresh()
+    if (swapIndex < 0 || swapIndex >= localOrder.length) return
+    const next = [...localOrder]
+    const temp = next[index]
+    next[index] = next[swapIndex]
+    next[swapIndex] = temp
+    setLocalOrder(next)
   }
 
   return (
@@ -59,11 +79,11 @@ export default function CategorySection({
           <span className="text-xs text-gray-400 ml-1">({behaviors.length})</span>
         </button>
         <button
-          onClick={() => setReorderMode(!reorderMode)}
+          onClick={handleStartReorder}
           className={`p-1 mr-1 rounded ${reorderMode ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}
-          title="Reorder behaviors"
+          title={reorderMode ? 'Save order' : 'Reorder behaviors'}
         >
-          <ArrowUpDown size={14} />
+          {reorderMode ? <span className="text-[10px] font-bold">Done</span> : <ArrowUpDown size={14} />}
         </button>
         <button onClick={() => onEditCategory(category.id)} className="p-1 text-gray-400 hover:text-gray-600 mr-1" title="Edit category">
           <Pencil size={14} />
@@ -93,7 +113,7 @@ export default function CategorySection({
           </div>
 
           {/* Active behavior rows */}
-          {behaviors.map((behavior, index) => (
+          {displayBehaviors.map((behavior, index) => (
             <BehaviorRow
               key={behavior.id}
               behavior={behavior}
@@ -107,7 +127,7 @@ export default function CategorySection({
               onMoveUp={() => handleMove(index, -1)}
               onMoveDown={() => handleMove(index, 1)}
               isFirst={index === 0}
-              isLast={index === behaviors.length - 1}
+              isLast={index === displayBehaviors.length - 1}
               visibleCount={getVisibleCount(behavior.frequency, isDesktop)}
             />
           ))}
