@@ -15,11 +15,12 @@ import AddCategoryModal from '@/components/AddCategoryModal'
 import AddBehaviorModal from '@/components/AddBehaviorModal'
 import EditBehaviorModal from '@/components/EditBehaviorModal'
 import EditCategoryModal from '@/components/EditCategoryModal'
+import SaveAsTemplateModal from '@/components/SaveAsTemplateModal'
 import { cycleValue } from '@/components/BehaviorRow'
 import type { EntryValue } from '@/lib/types'
 
 export default function HomePage() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   useTemplateSync(user?.id)
   const [activeTab, setActiveTab] = useState<TabId>('work')
 
@@ -34,6 +35,7 @@ export default function HomePage() {
   const [addBehaviorCategoryId, setAddBehaviorCategoryId] = useState<string | null>(null)
   const [editBehaviorId, setEditBehaviorId] = useState<string | null>(null)
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null)
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
 
   const handleCellTap = useCallback(
     (behaviorId: string, date: string, currentValue: EntryValue | null) => {
@@ -115,7 +117,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              <div className="px-4 py-4">
+              <div className="px-4 py-4 space-y-3">
                 <button
                   onClick={() => setShowAddCategory(true)}
                   className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600"
@@ -123,6 +125,14 @@ export default function HomePage() {
                   <Plus size={16} />
                   Add Category
                 </button>
+                {isAdmin && categories.length > 0 && (
+                  <button
+                    onClick={() => setShowSaveTemplate(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-600 font-medium hover:bg-blue-100"
+                  >
+                    Save as Template
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -153,6 +163,15 @@ export default function HomePage() {
       )}
       {editCategory && (
         <EditCategoryModal category={editCategory} onSuccess={refresh} onClose={() => setEditCategoryId(null)} />
+      )}
+      {showSaveTemplate && user && (
+        <SaveAsTemplateModal
+          userId={user.id}
+          categories={categories}
+          behaviors={behaviors}
+          onSuccess={() => {}}
+          onClose={() => setShowSaveTemplate(false)}
+        />
       )}
     </AppShell>
   )

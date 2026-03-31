@@ -114,22 +114,9 @@ function TemplatesSection({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Create */}
-      <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Create Template</h3>
-        <div className="flex gap-2">
-          <input
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            placeholder="Template name"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onKeyDown={e => e.key === 'Enter' && handleCreate()}
-          />
-          <button onClick={handleCreate} disabled={!newName.trim()} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50">
-            Create
-          </button>
-        </div>
-      </div>
+      <p className="text-xs text-gray-400 px-1">
+        Create templates from the main Work tab using &quot;Save as Template&quot;. Edit or delete them here.
+      </p>
 
       {/* List */}
       {loading ? (
