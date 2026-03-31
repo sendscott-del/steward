@@ -40,6 +40,7 @@ export function useAuth() {
       .eq('user_id', user.id)
       .then(({ data, error }) => {
         if (cancelled) return
+        console.log('[LSW Admin Check]', { userId: user.id, data, error, isAdmin: !error && (data ?? []).length > 0 })
         setIsAdmin(!error && (data ?? []).length > 0)
         setAdminLoading(false)
       })
