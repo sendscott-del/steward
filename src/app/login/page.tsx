@@ -40,7 +40,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-2">Steward</h1>
+        <div className="flex justify-center mb-4">
+          <img src="/logo.png" alt="Steward" className="h-24 md:h-32 w-auto" />
+        </div>
         <p className="text-gray-500 text-center text-sm mb-8">
           {isSignUp ? 'Create your account' : 'Sign in to your account'}
         </p>

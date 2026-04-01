@@ -4,6 +4,17 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Steward',
   description: 'Track and manage your stewardship behaviors and accountability',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Steward',
+  },
+  themeColor: '#1e3a5f',
 }
 
 export const viewport: Viewport = {
