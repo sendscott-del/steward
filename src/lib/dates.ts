@@ -102,9 +102,9 @@ export function getLast12Dates(
     const baseMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     return Array.from({ length: 12 }, (_, i) => subMonths(baseMonth, i * interval))
   }
-  // quarterly
+  // quarterly — last 4 quarters
   const now = new Date()
   const currentQ = Math.floor(now.getMonth() / 3)
   const baseQ = new Date(now.getFullYear(), currentQ * 3, 1)
-  return Array.from({ length: 12 }, (_, i) => subMonths(baseQ, i * 3 * interval))
+  return Array.from({ length: 4 }, (_, i) => subMonths(baseQ, i * 3 * interval))
 }

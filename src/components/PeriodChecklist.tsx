@@ -36,7 +36,7 @@ function cycleValue(current: EntryValue | null): EntryValue | null {
 const COMPLIANCE_LABELS: Record<string, string> = {
   weekly: 'L12W',
   monthly: 'L12M',
-  quarterly: 'L12Q',
+  quarterly: 'L4Q',
 }
 
 export default function PeriodChecklist({
@@ -93,18 +93,15 @@ export default function PeriodChecklist({
           </button>
           <div className="text-center flex items-center gap-2">
             <span className="text-xs md:text-sm font-medium text-gray-600">{periodLabel}</span>
-            {isCurrentPeriod && (
+            {isCurrentPeriod ? (
               <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Current</span>
-            )}
-            {isPast && (
-              <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">Past</span>
-            )}
-            {isFuture && (
-              <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">Future</span>
-            )}
-            {!isCurrentPeriod && (
-              <button onClick={onToday} className="text-[10px] text-blue-600 hover:underline">
-                Current
+            ) : isPast ? (
+              <button onClick={onToday} className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded hover:bg-gray-200">
+                Past ↩
+              </button>
+            ) : (
+              <button onClick={onToday} className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded hover:bg-blue-100">
+                Future ↩
               </button>
             )}
           </div>
