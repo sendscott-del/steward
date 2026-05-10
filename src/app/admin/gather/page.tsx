@@ -133,6 +133,19 @@ export default function GatherAdminPage() {
     void refresh()
   }
 
+  async function deleteUser(target: GatherAppUser) {
+    const label = target.email || target.user_id
+    if (!window.confirm(
+      `Permanently delete ${label}?\n\nThis removes them from auth and from every app profile (Magnify, Steward, Glean, Knit). It does NOT remove them from Tidings — Tidings is on a separate Supabase project and has its own user list.\n\nThis cannot be undone.`
+    )) return
+    setBusyId(target.user_id)
+    setError('')
+    const { error } = await supabase.rpc('gather_delete_user', { p_user_id: target.user_id })
+    if (error) setError(error.message)
+    setBusyId(null)
+    void refresh()
+  }
+
   async function handleTidingsAdd(e: React.FormEvent) {
     e.preventDefault()
     setTidingsBusy('adding')
@@ -265,11 +278,12 @@ export default function GatherAdminPage() {
                   </th>
                 ))}
                 <th className="text-left px-4 py-2 font-semibold">Super admin</th>
+                <th className="px-2 py-2" />
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={APPS.length + 2} className="px-4 py-8 text-center text-gray-400">No users.</td></tr>
+                <tr><td colSpan={APPS.length + 3} className="px-4 py-8 text-center text-gray-400">No users.</td></tr>
               )}
               {filtered.map(u => {
                 const grants = new Map(u.apps.map(a => [a.app_name, a.role]))
@@ -315,6 +329,17 @@ export default function GatherAdminPage() {
                         <option value="stake_president">Stake President</option>
                         <option value="stake_clerk">Stake Clerk</option>
                       </select>
+                    </td>
+                    <td className="px-2 py-3 text-center">
+                      <button
+                        onClick={() => void deleteUser(u)}
+                        disabled={busyId === u.user_id || u.user_id === user?.id}
+                        className="text-gray-400 hover:text-red-500 disabled:opacity-30 transition-colors"
+                        title={u.user_id === user?.id ? "You can't delete yourself" : `Delete ${u.email || 'user'}`}
+                        aria-label={`Delete ${u.email || 'user'}`}
+                      >
+                        ✕
+                      </button>
                     </td>
                   </tr>
                 )

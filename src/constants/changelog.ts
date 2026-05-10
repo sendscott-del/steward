@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.16.1'
+export const APP_VERSION = '2.17.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.17.0',
+    date: '2026-05-10',
+    enhancements: [
+      'Gather → Delete user: every row in Admin → Gather now has a delete button. Confirms with a dialog, then fully removes the user from auth and from every shared-project app profile (Magnify, Steward, Glean, Knit) via the new gather_delete_user RPC. Tidings is on a separate Supabase project and is not affected — manage Tidings users in the Tidings users panel further down the page or in Tidings itself. Super admins cannot delete themselves.',
+    ],
+    bugFixes: [
+      'Gather → grant Steward access: the gather_grant_app_access RPC was inserting into steward_user_profiles using a non-existent "user_id" column instead of the table\'s actual PK column "id". Toggling Steward access on for any user surfaced the error "column user_id of relation steward_user_profiles does not exist". Fixed by switching the insert to use "id" with ON CONFLICT (id).',
+    ],
+  },
   {
     version: '2.16.1',
     date: '2026-05-04',
