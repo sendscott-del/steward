@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
-import { ClipboardList, StickyNote, BookOpen, Menu, X } from 'lucide-react'
+import { ClipboardList, StickyNote, BookOpen, Menu, X, Users } from 'lucide-react'
 import AppSwitcher from './AppSwitcher'
 import { StewardLogo } from './icons/StewardLogo'
 import { DemoModeToggle } from './DemoModeBanner'
@@ -18,7 +18,7 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children, activeTab, onTabChange }: AppShellProps) {
-  const { user, loading, isAdmin, signOut } = useAuth()
+  const { user, loading, isAdmin, canManageInterviews, signOut } = useAuth()
   const router = useRouter()
   const { t, lang, setLang } = useLanguage()
   const [showMenu, setShowMenu] = useState(false)
@@ -66,6 +66,17 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
               <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-44">
+                {canManageInterviews && (
+                  <>
+                    <button
+                      onClick={() => { router.push('/interviews'); setShowMenu(false) }}
+                      className="w-full px-4 py-2 text-left text-sm text-steward-primary font-medium hover:bg-blue-50 flex items-center gap-2"
+                    >
+                      <Users size={14} /> Quarterly Interviews
+                    </button>
+                    <div className="border-t border-gray-100 my-1" />
+                  </>
+                )}
                 {isAdmin && (
                   <>
                     <button

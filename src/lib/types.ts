@@ -1,6 +1,34 @@
 export type EntryValue = 'y' | 'n' | 'na'
 export type Frequency = 'weekly' | 'monthly' | 'quarterly'
 
+export type StakeRole =
+  | 'stake_president'
+  | 'first_counselor'
+  | 'second_counselor'
+  | 'exec_secretary'
+
+export const STAKE_ROLE_LABELS: Record<StakeRole, string> = {
+  stake_president: 'Stake President',
+  first_counselor: 'First Counselor',
+  second_counselor: 'Second Counselor',
+  exec_secretary: 'Executive Secretary',
+}
+
+export interface Interview {
+  id: string
+  interviewee_name: string
+  interviewee_calling: string | null
+  assigned_to_user_id: string | null
+  year: number
+  quarter_num: 1 | 2 | 3 | 4
+  scheduled_for: string | null  // YYYY-MM-DD
+  completed_at: string | null   // YYYY-MM-DD
+  notes: string | null
+  last_updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Category {
   id: string
   user_id: string

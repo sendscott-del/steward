@@ -20,10 +20,11 @@ import CallingPicker from '@/components/CallingPicker'
 import SaveAsTemplateModal from '@/components/SaveAsTemplateModal'
 import NewUserSetup from '@/components/NewUserSetup'
 import PendingApproval from '@/components/PendingApproval'
+import MyInterviewsCard from '@/components/MyInterviewsCard'
 import type { EntryValue } from '@/lib/types'
 
 export default function HomePage() {
-  const { user, isAdmin, userStatus, statusLoading, signOut, refreshStatus } = useAuth()
+  const { user, isAdmin, userStatus, statusLoading, canManageInterviews, signOut, refreshStatus } = useAuth()
   const [activeTab, setActiveTab] = useState<TabId>('work')
   const [showCallingPicker, setShowCallingPicker] = useState(false)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
@@ -143,82 +144,88 @@ export default function HomePage() {
   return (
     <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
       {activeTab === 'work' && (
-        <div className="pb-4">
+        <div className="pb-4 max-w-7xl mx-auto lg:px-4">
           {loading ? (
             <div className="flex items-center justify-center h-48 text-sm text-gray-400">Loading...</div>
           ) : (
             <>
-              {/* Weekly section */}
-              {weeklyBehaviors.length > 0 && (
-                <PeriodChecklist
-                  title="This Week"
-                  periodDate={weekDate}
-                  periodLabel={weekLabel}
-                  periodOffset={weekOffset}
-                  frequency="weekly"
-                  categories={categories}
-                  behaviors={weeklyBehaviors}
-                  entries={entries}
-                  comments={comments}
-                  complianceMap={complianceMap}
-                  onToggle={handleToggle}
-                  onComment={handleComment}
-                  onEditBehavior={behId => setEditBehaviorId(behId)}
-                  onEditCategory={catId => setEditCategoryId(catId)}
-                  onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
-                  onPrev={() => setWeekOffset(o => o - 1)}
-                  onNext={() => setWeekOffset(o => o + 1)}
-                  onToday={() => setWeekOffset(0)}
-                />
-              )}
+              {/* Quarterly Interviews — only shown to presidency / exec sec / admin */}
+              {canManageInterviews && user && <MyInterviewsCard userId={user.id} />}
 
-              {/* Monthly section */}
-              {monthlyBehaviors.length > 0 && (
-                <PeriodChecklist
-                  title="This Month"
-                  periodDate={monthDate}
-                  periodLabel={monthLabel}
-                  periodOffset={monthOffset}
-                  frequency="monthly"
-                  categories={categories}
-                  behaviors={monthlyBehaviors}
-                  entries={entries}
-                  comments={comments}
-                  complianceMap={complianceMap}
-                  onToggle={handleToggle}
-                  onComment={handleComment}
-                  onEditBehavior={behId => setEditBehaviorId(behId)}
-                  onEditCategory={catId => setEditCategoryId(catId)}
-                  onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
-                  onPrev={() => setMonthOffset(o => o - 1)}
-                  onNext={() => setMonthOffset(o => o + 1)}
-                  onToday={() => setMonthOffset(0)}
-                />
-              )}
+              {/* Period sections: stacked on phone/tablet, side-by-side on desktop. */}
+              <div className="lg:grid lg:grid-cols-2 lg:gap-4 lg:mt-3 [&>*]:lg:bg-white [&>*]:lg:border [&>*]:lg:border-gray-200 [&>*]:lg:rounded-lg [&>*]:lg:overflow-hidden [&>*]:lg:mb-0">
+                {/* Weekly section */}
+                {weeklyBehaviors.length > 0 && (
+                  <PeriodChecklist
+                    title="This Week"
+                    periodDate={weekDate}
+                    periodLabel={weekLabel}
+                    periodOffset={weekOffset}
+                    frequency="weekly"
+                    categories={categories}
+                    behaviors={weeklyBehaviors}
+                    entries={entries}
+                    comments={comments}
+                    complianceMap={complianceMap}
+                    onToggle={handleToggle}
+                    onComment={handleComment}
+                    onEditBehavior={behId => setEditBehaviorId(behId)}
+                    onEditCategory={catId => setEditCategoryId(catId)}
+                    onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
+                    onPrev={() => setWeekOffset(o => o - 1)}
+                    onNext={() => setWeekOffset(o => o + 1)}
+                    onToday={() => setWeekOffset(0)}
+                  />
+                )}
 
-              {/* Quarterly section */}
-              {quarterlyBehaviors.length > 0 && (
-                <PeriodChecklist
-                  title="This Quarter"
-                  periodDate={quarterDate}
-                  periodLabel={quarterLabel}
-                  periodOffset={quarterOffset}
-                  frequency="quarterly"
-                  categories={categories}
-                  behaviors={quarterlyBehaviors}
-                  entries={entries}
-                  comments={comments}
-                  complianceMap={complianceMap}
-                  onToggle={handleToggle}
-                  onComment={handleComment}
-                  onEditBehavior={behId => setEditBehaviorId(behId)}
-                  onEditCategory={catId => setEditCategoryId(catId)}
-                  onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
-                  onPrev={() => setQuarterOffset(o => o - 1)}
-                  onNext={() => setQuarterOffset(o => o + 1)}
-                  onToday={() => setQuarterOffset(0)}
-                />
-              )}
+                {/* Monthly section */}
+                {monthlyBehaviors.length > 0 && (
+                  <PeriodChecklist
+                    title="This Month"
+                    periodDate={monthDate}
+                    periodLabel={monthLabel}
+                    periodOffset={monthOffset}
+                    frequency="monthly"
+                    categories={categories}
+                    behaviors={monthlyBehaviors}
+                    entries={entries}
+                    comments={comments}
+                    complianceMap={complianceMap}
+                    onToggle={handleToggle}
+                    onComment={handleComment}
+                    onEditBehavior={behId => setEditBehaviorId(behId)}
+                    onEditCategory={catId => setEditCategoryId(catId)}
+                    onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
+                    onPrev={() => setMonthOffset(o => o - 1)}
+                    onNext={() => setMonthOffset(o => o + 1)}
+                    onToday={() => setMonthOffset(0)}
+                  />
+                )}
+
+                {/* Quarterly section */}
+                {quarterlyBehaviors.length > 0 && (
+                  <PeriodChecklist
+                    title="This Quarter"
+                    periodDate={quarterDate}
+                    periodLabel={quarterLabel}
+                    periodOffset={quarterOffset}
+                    frequency="quarterly"
+                    categories={categories}
+                    behaviors={quarterlyBehaviors}
+                    entries={entries}
+                    comments={comments}
+                    complianceMap={complianceMap}
+                    onToggle={handleToggle}
+                    onComment={handleComment}
+                    onEditBehavior={behId => setEditBehaviorId(behId)}
+                    onEditCategory={catId => setEditCategoryId(catId)}
+                    onAddBehavior={catId => setAddBehaviorCategoryId(catId)}
+                    onPrev={() => setQuarterOffset(o => o - 1)}
+                    onNext={() => setQuarterOffset(o => o + 1)}
+                    onToday={() => setQuarterOffset(0)}
+                  />
+                )}
+              </div>
 
               {/* Empty state — show calling picker */}
               {categories.length === 0 && !showCallingPicker && (
@@ -236,7 +243,7 @@ export default function HomePage() {
               )}
 
               {categories.length > 0 && !showCallingPicker && (
-                <div className="px-4 py-4 space-y-3">
+                <div className="px-4 py-4 space-y-3 max-w-2xl mx-auto">
                   <button
                     onClick={() => setShowAddCategory(true)}
                     className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600"
@@ -258,8 +265,16 @@ export default function HomePage() {
         </div>
       )}
 
-      {activeTab === 'reflect' && user && <ReflectionLog userId={user.id} />}
-      {activeTab === 'notes' && user && <NotesTab userId={user.id} />}
+      {activeTab === 'reflect' && user && (
+        <div className="max-w-3xl mx-auto">
+          <ReflectionLog userId={user.id} />
+        </div>
+      )}
+      {activeTab === 'notes' && user && (
+        <div className="max-w-3xl mx-auto">
+          <NotesTab userId={user.id} />
+        </div>
+      )}
 
       {cellDetailModal && (
         <CellDetailModal

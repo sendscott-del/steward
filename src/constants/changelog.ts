@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.17.0'
+export const APP_VERSION = '2.18.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.0',
+    date: '2026-05-10',
+    enhancements: [
+      'Quarterly Interview Summary: a new page (Menu → Quarterly Interviews) where the stake presidency and the executive secretary can track every quarterly interview the presidency owes — bishops, high council, etc. The page is a grid: one row per interviewee, four columns (Q1–Q4). Click a cell to mark done; right-click (or long-press) to set a scheduled date, completion date, and notes. Add an interviewee with one click and rows are created for all four quarters of the year. Year stepper lets you navigate past/future. Filter by assigned presidency member. Live "X of Y done this quarter" stat at the top.',
+      'Sync to personal trackers: presidency members and the executive secretary now see a "My Interviews — Q[n]" card at the top of their Work tab listing the interviews assigned to them for the current quarter. Toggling a row writes to the same steward_interviews table the summary page uses — both views always agree. The card is hidden if the user has no assigned interviews this quarter.',
+      'Stake roles: a new optional `stake_role` field on the user profile (Stake President, First/Second Counselor, Executive Secretary). Admins set this in Admin → Active Users with a one-click dropdown. The Quarterly Interviews page and the My Interviews card are gated on this role; admins also get access.',
+      'Desktop layout: the Work tab no longer renders as a narrow phone-width column on a wide browser. The page is wrapped in a centered container that expands on tablet and desktop. On large screens (≥1024px) the Weekly / Monthly / Quarterly sections sit side-by-side as cards instead of stacked, so the desktop view actually uses the horizontal space. Mobile experience is unchanged.',
+      'Wider Guide, Release Notes, and Admin pages on desktop (max-w-3xl) so the long-form content is easier to scan in a browser.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.17.0',
     date: '2026-05-10',

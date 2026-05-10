@@ -16,7 +16,7 @@ export default function ReleaseNotesPage() {
         <h1 className="text-lg font-bold text-gray-900">Release Notes</h1>
       </header>
 
-      <div className="max-w-lg mx-auto p-4 space-y-4">
+      <div className="max-w-3xl mx-auto p-4 space-y-4">
         {CHANGELOG.map(entry => (
           <div key={entry.version} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
