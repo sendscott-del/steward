@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.3'
+export const APP_VERSION = '2.18.4'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.4',
+    date: '2026-05-10',
+    enhancements: [],
+    bugFixes: [
+      'Quarterly Interviews → Assigned to picker no longer shows rejected or pending users. The dropdown was querying steward_user_profiles by stake_role only, so a duplicate Stake President account that had been rejected (left over from earlier signup churn) was leaking into the picker as a second "Stake President" option. Added a status=approved filter to the members query, and cleared the stale role on the rejected scottdshurtliff@gmail.com profile so only the real sendscott@gmail.com account remains.',
+    ],
+  },
   {
     version: '2.18.3',
     date: '2026-05-10',
