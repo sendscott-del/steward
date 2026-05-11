@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.1'
+export const APP_VERSION = '2.18.2'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.2',
+    date: '2026-05-10',
+    enhancements: [],
+    bugFixes: [
+      'Removed the duplicate "My Interviews" card from the Work tab. Presidency members and the executive secretary already see their quarterly interviews in the regular "This Quarter" section (because the Stake President / Counselor templates seed each interview as a personal quarterly behavior). The summary card was duplicating that list. The dedicated Quarterly Interviews page (Menu → Quarterly Interviews) remains the single cross-presidency report; the home/Work tab is back to the regular tracker view.',
+    ],
+  },
   {
     version: '2.18.1',
     date: '2026-05-10',

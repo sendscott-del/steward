@@ -20,11 +20,10 @@ import CallingPicker from '@/components/CallingPicker'
 import SaveAsTemplateModal from '@/components/SaveAsTemplateModal'
 import NewUserSetup from '@/components/NewUserSetup'
 import PendingApproval from '@/components/PendingApproval'
-import MyInterviewsCard from '@/components/MyInterviewsCard'
 import type { EntryValue } from '@/lib/types'
 
 export default function HomePage() {
-  const { user, isAdmin, userStatus, statusLoading, canManageInterviews, signOut, refreshStatus } = useAuth()
+  const { user, isAdmin, userStatus, statusLoading, signOut, refreshStatus } = useAuth()
   const [activeTab, setActiveTab] = useState<TabId>('work')
   const [showCallingPicker, setShowCallingPicker] = useState(false)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
@@ -149,10 +148,9 @@ export default function HomePage() {
             <div className="flex items-center justify-center h-48 text-sm text-gray-400">Loading...</div>
           ) : (
             <>
-              {/* Quarterly Interviews — only shown to presidency / exec sec / admin */}
-              {canManageInterviews && user && <MyInterviewsCard userId={user.id} />}
-
-              {/* Period sections: stacked on phone/tablet, side-by-side on desktop. */}
+              {/* Period sections: stacked on phone/tablet, side-by-side on desktop.
+                  Quarterly interviews appear here in the Quarterly section as
+                  personal behaviors from the Stake President / Counselor template. */}
               <div className="lg:grid lg:grid-cols-2 lg:gap-4 lg:mt-3 [&>*]:lg:bg-white [&>*]:lg:border [&>*]:lg:border-gray-200 [&>*]:lg:rounded-lg [&>*]:lg:overflow-hidden [&>*]:lg:mb-0">
                 {/* Weekly section */}
                 {weeklyBehaviors.length > 0 && (
