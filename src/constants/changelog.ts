@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.2'
+export const APP_VERSION = '2.18.3'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.3',
+    date: '2026-05-10',
+    enhancements: [
+      'Quarterly interviews now sync automatically between the personal Work tab and the Quarterly Interviews report. Mark a bishop interview done from your tracker and the cell on /interviews flips to green in the same instant; mark it done on /interviews and your tracker shows the green checkmark on the next page load. Works in both directions, including unmarking. Implemented as two AFTER triggers in Postgres (steward_sync_entry_to_interview and steward_sync_interview_to_entry), with pg_trigger_depth() guards to prevent recursion. The match key is the behavior name minus the "Interview " prefix plus year + quarter. End-to-end round-trip tested in both directions before shipping.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.18.2',
     date: '2026-05-10',
