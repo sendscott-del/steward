@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import type { StakeRole } from '@/lib/types'
 
 export type UserStatus = 'pending' | 'approved' | 'rejected' | 'new' | null
 
@@ -13,6 +14,7 @@ export function useAuth() {
   const [adminLoading, setAdminLoading] = useState(true)
   const [userStatus, setUserStatus] = useState<UserStatus>(null)
   const [statusLoading, setStatusLoading] = useState(true)
+  const [stakeRole, setStakeRole] = useState<StakeRole | null>(null)
   const checkedUserId = useRef<string | null>(null)
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export function useAuth() {
       setAdminLoading(false)
       setUserStatus(null)
       setStatusLoading(false)
+      setStakeRole(null)
       checkedUserId.current = null
       return
     }
@@ -63,17 +66,19 @@ export function useAuth() {
         }
       })
 
-    // Check user profile status
+    // Check user profile status + stake role
     supabase
       .from('steward_user_profiles')
-      .select('status')
+      .select('status, stake_role')
       .eq('id', uid)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setUserStatus(data.status as UserStatus)
+          setStakeRole((data.stake_role as StakeRole | null) ?? null)
         } else {
           setUserStatus('new') // no profile yet — needs to pick a calling
+          setStakeRole(null)
         }
         setStatusLoading(false)
         checkedUserId.current = uid
@@ -89,11 +94,21 @@ export function useAuth() {
     if (!user?.id) return
     const { data } = await supabase
       .from('steward_user_profiles')
-      .select('status')
+      .select('status, stake_role')
       .eq('id', user.id)
       .maybeSingle()
-    if (data) setUserStatus(data.status as UserStatus)
+    if (data) {
+      setUserStatus(data.status as UserStatus)
+      setStakeRole((data.stake_role as StakeRole | null) ?? null)
+    }
   }
 
-  return { user, loading, isAdmin, adminLoading, userStatus, statusLoading, signOut, refreshStatus }
+  const canManageInterviews =
+    isAdmin ||
+    stakeRole === 'stake_president' ||
+    stakeRole === 'first_counselor' ||
+    stakeRole === 'second_counselor' ||
+    stakeRole === 'exec_secretary'
+
+  return { user, loading, isAdmin, adminLoading, userStatus, statusLoading, stakeRole, canManageInterviews, signOut, refreshStatus }
 }

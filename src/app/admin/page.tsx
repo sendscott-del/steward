@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, Trash2, Pencil } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import type { Template, TemplateCategory, TemplateBehavior, Frequency } from '@/lib/types'
+import type { Template, TemplateCategory, TemplateBehavior, Frequency, StakeRole } from '@/lib/types'
+import { STAKE_ROLE_LABELS } from '@/lib/types'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -42,7 +43,7 @@ export default function AdminPage() {
         <h1 className="text-lg font-bold text-gray-900">Admin — Templates</h1>
       </header>
 
-      <div className="max-w-lg mx-auto p-4 space-y-8">
+      <div className="max-w-3xl mx-auto p-4 space-y-8">
         <PendingUsersSection />
         <AllUsersSection />
         <TemplatesSection userId={user.id} />
@@ -60,6 +61,7 @@ interface UserProfile {
   status: string
   selected_template_id: string | null
   selected_template_name: string | null
+  stake_role: StakeRole | null
   created_at: string
 }
 
@@ -334,6 +336,32 @@ function AllUsersSection() {
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs text-gray-500">Calling:</span>
               <span className="text-xs font-medium text-gray-700">{u.selected_template_name || 'None'}</span>
+            </div>
+
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-xs text-gray-500">Stake role:</span>
+              <select
+                value={u.stake_role ?? ''}
+                onChange={async (e) => {
+                  const next = e.target.value || null
+                  await supabase
+                    .from('steward_user_profiles')
+                    .update({ stake_role: next })
+                    .eq('id', u.id)
+                  fetchUsers()
+                }}
+                className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
+              >
+                <option value="">None</option>
+                {(Object.keys(STAKE_ROLE_LABELS) as StakeRole[]).map((r) => (
+                  <option key={r} value={r}>
+                    {STAKE_ROLE_LABELS[r]}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[10px] text-gray-400">
+                (unlocks Quarterly Interviews page)
+              </span>
             </div>
 
             {changingTemplate === u.id && (

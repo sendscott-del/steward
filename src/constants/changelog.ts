@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.16.1'
+export const APP_VERSION = '2.18.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,28 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.0',
+    date: '2026-05-10',
+    enhancements: [
+      'Quarterly Interview Summary: a new page (Menu → Quarterly Interviews) where the stake presidency and the executive secretary can track every quarterly interview the presidency owes — bishops, high council, etc. The page is a grid: one row per interviewee, four columns (Q1–Q4). Click a cell to mark done; right-click (or long-press) to set a scheduled date, completion date, and notes. Add an interviewee with one click and rows are created for all four quarters of the year. Year stepper lets you navigate past/future. Filter by assigned presidency member. Live "X of Y done this quarter" stat at the top.',
+      'Sync to personal trackers: presidency members and the executive secretary now see a "My Interviews — Q[n]" card at the top of their Work tab listing the interviews assigned to them for the current quarter. Toggling a row writes to the same steward_interviews table the summary page uses — both views always agree. The card is hidden if the user has no assigned interviews this quarter.',
+      'Stake roles: a new optional `stake_role` field on the user profile (Stake President, First/Second Counselor, Executive Secretary). Admins set this in Admin → Active Users with a one-click dropdown. The Quarterly Interviews page and the My Interviews card are gated on this role; admins also get access.',
+      'Desktop layout: the Work tab no longer renders as a narrow phone-width column on a wide browser. The page is wrapped in a centered container that expands on tablet and desktop. On large screens (≥1024px) the Weekly / Monthly / Quarterly sections sit side-by-side as cards instead of stacked, so the desktop view actually uses the horizontal space. Mobile experience is unchanged.',
+      'Wider Guide, Release Notes, and Admin pages on desktop (max-w-3xl) so the long-form content is easier to scan in a browser.',
+    ],
+    bugFixes: [],
+  },
+  {
+    version: '2.17.0',
+    date: '2026-05-10',
+    enhancements: [
+      'Gather → Delete user: every row in Admin → Gather now has a delete button. Confirms with a dialog, then fully removes the user from auth and from every shared-project app profile (Magnify, Steward, Glean, Knit) via the new gather_delete_user RPC. Tidings is on a separate Supabase project and is not affected — manage Tidings users in the Tidings users panel further down the page or in Tidings itself. Super admins cannot delete themselves.',
+    ],
+    bugFixes: [
+      'Gather → grant Steward access: the gather_grant_app_access RPC was inserting into steward_user_profiles using a non-existent "user_id" column instead of the table\'s actual PK column "id". Toggling Steward access on for any user surfaced the error "column user_id of relation steward_user_profiles does not exist". Fixed by switching the insert to use "id" with ON CONFLICT (id).',
+    ],
+  },
   {
     version: '2.16.1',
     date: '2026-05-04',

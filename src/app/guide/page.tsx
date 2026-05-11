@@ -17,7 +17,7 @@ export default function GuidePage() {
         <span className="text-xs text-gray-400 ml-auto">v{APP_VERSION}</span>
       </header>
 
-      <div className="max-w-lg mx-auto p-4 space-y-6">
+      <div className="max-w-3xl mx-auto p-4 space-y-6">
         <Section title="What is Steward?">
           <p>
             Steward helps leaders define, track, and reflect on the key behaviors
@@ -96,6 +96,35 @@ export default function GuidePage() {
             <li><strong>Show archived</strong> — Each category has a toggle to reveal archived behaviors</li>
             <li><strong>Delete</strong> — Permanently removes the item and all associated data</li>
           </ul>
+        </Section>
+
+        <Section title="Quarterly Interview Summary (Stake Presidency)">
+          <p>
+            Members of the stake presidency and the executive secretary see a
+            <strong> Quarterly Interviews</strong> link in the menu. It opens a single
+            page that tracks every quarterly interview the presidency owes —
+            bishops, high council, etc.
+          </p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li><strong>Add an interviewee</strong> — One click creates rows for all four quarters of the year</li>
+            <li><strong>Click a cell</strong> — Marks the interview done (today&apos;s date), or unmarks it</li>
+            <li><strong>Right-click / long-press</strong> — Opens the cell detail dialog: scheduled date, completion date, notes</li>
+            <li><strong>Year stepper</strong> — Navigate to past or future years with the ‹ › buttons</li>
+            <li><strong>Filter</strong> — Show only interviews assigned to a specific presidency member</li>
+            <li><strong>Edit row</strong> — The pencil icon edits name, calling, and assigned-to for all four quarters at once</li>
+          </ul>
+          <p className="mt-2">
+            On the Work tab, each presidency member also sees a
+            <strong> &quot;My Interviews — Q[n]&quot;</strong> card listing the
+            interviews assigned to them for the current quarter. Toggling a row
+            there is the same action as toggling on the summary page — both views
+            stay in sync because they read and write the same data.
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            To grant access: an admin assigns the user a <strong>Stake role</strong> in
+            Admin → Active Users (Stake President, First Counselor, Second
+            Counselor, or Executive Secretary).
+          </p>
         </Section>
 
         <Section title="Templates &amp; Groups (Admin)">
