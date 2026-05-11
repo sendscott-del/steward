@@ -6,7 +6,7 @@ import { ChevronLeft, Trash2, Pencil } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import type { Template, TemplateCategory, TemplateBehavior, Frequency, StakeRole } from '@/lib/types'
-import { STAKE_ROLE_LABELS } from '@/lib/types'
+import { STAKE_ROLE_LABELS, stakeRoleFromTemplateName } from '@/lib/types'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -136,10 +136,11 @@ function PendingUsersSection() {
       }
     }
 
-    // Mark as approved
+    // Mark as approved + derive stake_role from the chosen calling
     await supabase.from('steward_user_profiles').update({
       status: 'approved',
       approved_at: new Date().toISOString(),
+      stake_role: stakeRoleFromTemplateName(userProfile.selected_template_name),
     }).eq('id', userId)
 
     fetchUsers()
@@ -294,10 +295,12 @@ function AllUsersSection() {
       }
     }
 
-    // Update profile
+    // Update profile — calling AND derived stake_role in a single write.
+    // The "calling" picker is now the single source of truth for both fields.
     await supabase.from('steward_user_profiles').update({
       selected_template_id: template.id,
       selected_template_name: template.name,
+      stake_role: stakeRoleFromTemplateName(template.name),
     }).eq('id', userId)
 
     setReassigning(null)
@@ -333,35 +336,17 @@ function AllUsersSection() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className="text-xs text-gray-500">Calling:</span>
               <span className="text-xs font-medium text-gray-700">{u.selected_template_name || 'None'}</span>
-            </div>
-
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-gray-500">Stake role:</span>
-              <select
-                value={u.stake_role ?? ''}
-                onChange={async (e) => {
-                  const next = e.target.value || null
-                  await supabase
-                    .from('steward_user_profiles')
-                    .update({ stake_role: next })
-                    .eq('id', u.id)
-                  fetchUsers()
-                }}
-                className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
-              >
-                <option value="">None</option>
-                {(Object.keys(STAKE_ROLE_LABELS) as StakeRole[]).map((r) => (
-                  <option key={r} value={r}>
-                    {STAKE_ROLE_LABELS[r]}
-                  </option>
-                ))}
-              </select>
-              <span className="text-[10px] text-gray-400">
-                (unlocks Quarterly Interviews page)
-              </span>
+              {u.stake_role && (
+                <span
+                  className="text-[10px] font-semibold text-steward-primary bg-blue-50 px-1.5 py-0.5 rounded"
+                  title="Unlocks the Quarterly Interviews page"
+                >
+                  {STAKE_ROLE_LABELS[u.stake_role]}
+                </span>
+              )}
             </div>
 
             {changingTemplate === u.id && (

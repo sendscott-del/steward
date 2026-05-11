@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.0'
+export const APP_VERSION = '2.18.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.1',
+    date: '2026-05-10',
+    enhancements: [
+      'Calling and stake role are now one field. The Admin → Active Users page no longer shows two separate dropdowns. Pick a calling/template and the stake_role is derived automatically from the template name (Stake President → stake_president, First Counselor → first_counselor, Second Counselor → second_counselor, Executive Secretary → exec_secretary, anything else → none). The current role appears as a small blue badge next to the calling so admins can see at a glance who has access to the Quarterly Interviews page. Both DB columns (selected_template_id/name and stake_role) are still written so nothing downstream breaks — the UI is just collapsed into one picker.',
+      'Approving a pending user now also sets their stake_role from the calling they picked at signup, so newly approved presidency members get Quarterly Interviews access immediately without an extra step.',
+      'To grant exec_secretary without a behavior set: create or rename a template to "Executive Secretary" and assign it. The role mapping picks it up automatically.',
+    ],
+    bugFixes: [
+      'Quarterly Interviews import: backfilled stake_role from existing selected_template_name for all approved users, so any presidency member who was set up before v2.18.0 now sees the new menu item without needing to be re-edited.',
+    ],
+  },
   {
     version: '2.18.0',
     date: '2026-05-10',

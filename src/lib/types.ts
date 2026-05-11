@@ -14,6 +14,24 @@ export const STAKE_ROLE_LABELS: Record<StakeRole, string> = {
   exec_secretary: 'Executive Secretary',
 }
 
+// Map a calling/template name to the corresponding stake role.
+// Returns null when the calling has no presidency/exec-sec role
+// (e.g. High Councilor, Admin, custom templates).
+//
+// This is the single source of truth for the "calling = role" merge:
+// admins pick a calling/template in the UI, and stake_role is derived
+// from this mapping. To grant exec_secretary without a behavior set,
+// create or rename a template to "Executive Secretary".
+export function stakeRoleFromTemplateName(name: string | null | undefined): StakeRole | null {
+  switch (name) {
+    case 'Stake President':     return 'stake_president'
+    case 'First Counselor':     return 'first_counselor'
+    case 'Second Counselor':    return 'second_counselor'
+    case 'Executive Secretary': return 'exec_secretary'
+    default:                    return null
+  }
+}
+
 export interface Interview {
   id: string
   interviewee_name: string
