@@ -44,6 +44,7 @@ export function useInterviews(year: number, currentUserId: string | undefined): 
       supabase
         .from('steward_user_profiles')
         .select('id, full_name, email, stake_role')
+        .eq('status', 'approved')
         .in('stake_role', [
           'stake_president',
           'first_counselor',
