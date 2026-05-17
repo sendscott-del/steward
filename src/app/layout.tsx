@@ -17,14 +17,17 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Steward',
   },
-  themeColor: '#1e3a5f',
 }
 
+// Next 16 moved themeColor out of metadata and into viewport — keeping it
+// in metadata produced "Unsupported metadata themeColor" warnings on every
+// page build. Same value, just the right place.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: '#1e3a5f',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
