@@ -66,6 +66,14 @@ export default function HomePage() {
   const monthlyBehaviors = useMemo(() => behaviors.filter(b => b.frequency === 'monthly'), [behaviors])
   const quarterlyBehaviors = useMemo(() => behaviors.filter(b => b.frequency === 'quarterly'), [behaviors])
 
+  // Categories that have any active behavior — used by PeriodChecklist to
+  // suppress the "Add a behavior" placeholder for categories that are
+  // actually populated in a different frequency section.
+  const populatedCategoryIds = useMemo(
+    () => new Set(behaviors.filter(b => !b.is_archived).map(b => b.category_id)),
+    [behaviors]
+  )
+
   // Modal state
   const [cellDetailModal, setCellDetailModal] = useState<{
     behaviorId: string; behaviorName: string; date: string
@@ -150,8 +158,10 @@ export default function HomePage() {
             <>
               {/* Period sections: stacked on phone/tablet, side-by-side on desktop.
                   Quarterly interviews appear here in the Quarterly section as
-                  personal behaviors from the Stake President / Counselor template. */}
-              <div className="lg:grid lg:grid-cols-2 lg:gap-4 lg:mt-3 [&>*]:lg:bg-white [&>*]:lg:border [&>*]:lg:border-gray-200 [&>*]:lg:rounded-lg [&>*]:lg:overflow-hidden [&>*]:lg:mb-0">
+                  personal behaviors from the Stake President / Counselor template.
+                  Three columns on lg+ so Week | Month | Quarter sit together
+                  instead of Quarter dropping to a second row with an empty gap. */}
+              <div className="lg:grid lg:grid-cols-3 lg:gap-4 lg:mt-3 lg:items-start [&>*]:lg:bg-white [&>*]:lg:border [&>*]:lg:border-gray-200 [&>*]:lg:rounded-lg [&>*]:lg:overflow-hidden [&>*]:lg:mb-0">
                 {/* Weekly section */}
                 {weeklyBehaviors.length > 0 && (
                   <PeriodChecklist
@@ -165,6 +175,7 @@ export default function HomePage() {
                     entries={entries}
                     comments={comments}
                     complianceMap={complianceMap}
+                    populatedCategoryIds={populatedCategoryIds}
                     onToggle={handleToggle}
                     onComment={handleComment}
                     onEditBehavior={behId => setEditBehaviorId(behId)}
@@ -189,6 +200,7 @@ export default function HomePage() {
                     entries={entries}
                     comments={comments}
                     complianceMap={complianceMap}
+                    populatedCategoryIds={populatedCategoryIds}
                     onToggle={handleToggle}
                     onComment={handleComment}
                     onEditBehavior={behId => setEditBehaviorId(behId)}
@@ -213,6 +225,7 @@ export default function HomePage() {
                     entries={entries}
                     comments={comments}
                     complianceMap={complianceMap}
+                    populatedCategoryIds={populatedCategoryIds}
                     onToggle={handleToggle}
                     onComment={handleComment}
                     onEditBehavior={behId => setEditBehaviorId(behId)}

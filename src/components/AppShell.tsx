@@ -65,7 +65,7 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
           {showMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-44">
+              <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-56">
                 {canManageInterviews && (
                   <>
                     <button

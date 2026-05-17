@@ -61,6 +61,18 @@ export function useNotes(userId: string | undefined) {
     fetchNote()
   }, [userId, demoMode])
 
+  // Cancel any pending debounced save when the hook unmounts so we don't
+  // try to setSaving on an unmounted component (and don't issue a write
+  // for a user that's already signed out).
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+    }
+  }, [])
+
   const updateContent = useCallback((content: string) => {
     if (!note) return
 
