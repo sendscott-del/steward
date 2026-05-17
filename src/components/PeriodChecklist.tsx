@@ -18,6 +18,12 @@ interface PeriodChecklistProps {
   entries: Map<string, Entry>
   comments: Map<string, CellComment>
   complianceMap: Map<string, number | null>
+  // Categories that have at least one behavior in *any* frequency. Used to
+  // avoid showing the "Add a behavior to this category" placeholder in the
+  // weekly section when the category is actually populated elsewhere (e.g.
+  // a Stake President's INTERVIEWS category has 14 quarterly interviews;
+  // showing it as empty in the weekly section is misleading).
+  populatedCategoryIds: Set<string>
   onToggle: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
   onComment: (behaviorId: string, date: string) => void
   onEditBehavior: (behaviorId: string) => void
@@ -44,6 +50,7 @@ const COMPLIANCE_LABELS: Record<string, string> = {
 export default function PeriodChecklist({
   title, periodDate, periodLabel, periodOffset, frequency,
   categories, behaviors, entries, comments, complianceMap,
+  populatedCategoryIds,
   onToggle, onComment, onEditBehavior, onEditCategory, onAddBehavior,
   onPrev, onNext, onToday,
 }: PeriodChecklistProps) {
@@ -124,8 +131,14 @@ export default function PeriodChecklist({
         <div>
           {categories.map(cat => {
             const catBehaviors = behaviorsByCategory.get(cat.id) ?? []
-            // Show empty categories only in the first section (weekly) so user can add behaviors
-            if (catBehaviors.length === 0 && frequency !== 'weekly') return null
+            // Hide a category entirely from this section if it has no behaviors
+            // for this frequency AND it's populated elsewhere — otherwise we
+            // show "Add a behavior" under a category that's actually full of
+            // behaviors in another section, which is confusing.
+            if (catBehaviors.length === 0) {
+              if (frequency !== 'weekly') return null
+              if (populatedCategoryIds.has(cat.id)) return null
+            }
 
             return (
               <div key={cat.id}>

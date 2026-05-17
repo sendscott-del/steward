@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.4'
+export const APP_VERSION = '2.18.5'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.5',
+    date: '2026-05-10',
+    enhancements: [],
+    bugFixes: [
+      'Desktop Work tab: This Week / This Month / This Quarter now sit side-by-side in three columns on lg+ screens instead of dropping Quarterly to a second row with an empty right column. Mobile remains a single stack.',
+      'Header menu: bumped width from w-44 to w-56 so "Quarterly Interviews" no longer wraps onto two lines.',
+      'Quarterly Interviews: clicking a Q1 / Q3 / Q4 cell when today is in Q2 used to stamp today\'s date (e.g. "May 17") under the wrong quarter — which read as "this interview was done May 17 in Q1," nonsense. Now an off-quarter click uses the last day of the clicked quarter (Mar 31 / Sep 30 / Dec 31) and the displayed badge matches the column. Clicks inside the current quarter still use today.',
+      'Work tab: a category that had no behaviors at a given frequency (e.g. INTERVIEWS for a Stake President, which only has quarterly behaviors) used to show an empty "Add a behavior to this category" placeholder in the Weekly section, making it look like the category was empty even when it had 14 quarterly entries. The placeholder is now hidden for categories that are populated in any other frequency.',
+      'Notes tab: pending debounced save now cancels on unmount, fixing a small memory leak / "setSaving on unmounted component" warning when navigating away mid-typing.',
+    ],
+  },
   {
     version: '2.18.4',
     date: '2026-05-10',
