@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.5'
+export const APP_VERSION = '2.18.6'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.18.6',
+    date: '2026-05-10',
+    enhancements: [
+      'Quarterly Interviews: cleaned up the interviewee names and callings. Names are now just the person (e.g. "Himebaugh", "Ravi Malli", "Jon Moss") and the calling subtitle describes their actual role and ward (e.g. "Bishop, HP1 Ward", "High Council, W1 Ward + Mission", "Stake Young Men President"). Previously the name was a long descriptor like "Bishop (HP1) - Himebaugh" and the calling was a generic "Stake President interview", so the two lines duplicated each other.',
+      'Stake President / First Counselor / Second Counselor templates: the underlying behavior names were renamed in lockstep so future template applications get the clean names from the start. Each user\'s existing per-user behaviors were also renamed via a one-time SQL pass so they stay aligned with the interview rows (the sync triggers match on behavior name).',
+    ],
+    bugFixes: [
+      'Removed the "Unsupported metadata themeColor" warning that appeared on every page build. Next 16 expects themeColor in the viewport export, not the metadata export. Same color, just the right place.',
+    ],
+  },
   {
     version: '2.18.5',
     date: '2026-05-10',
