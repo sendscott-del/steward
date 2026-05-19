@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.19.1'
+export const APP_VERSION = '2.19.2'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.19.2',
+    date: '2026-05-19',
+    enhancements: [
+      'Steward glyph recolored from gold to white. The bright blue background is unchanged; the checkmark on the home-screen icon and the in-app StewardLogo are now white instead of gold. Aligns with the suite-wide rule that default icons are brand color + white glyph; iOS Tinted (sleep) mode then renders white-on-color as the gold-on-black look the user wants there.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.19.1',
     date: '2026-05-19',
