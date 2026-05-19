@@ -54,6 +54,30 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
             <p className="text-[10px] italic text-gray-400 leading-tight truncate">&ldquo;{t('app.tagline')}&rdquo; <span className="not-italic">{t('app.taglineRef')}</span></p>
           </div>
         </div>
+        {/* EN/ES toggle lives in the top bar across the suite — moved out of
+            the hamburger menu so a one-tap language switch is always one
+            tap away. Mirrors Tidings and the rest of the Gathered apps. */}
+        <div className="flex items-center gap-1 text-[11px] font-semibold tracking-wide select-none">
+          <button
+            type="button"
+            onClick={() => setLang('en')}
+            aria-pressed={lang === 'en'}
+            aria-label="English"
+            className={lang === 'en' ? 'text-steward-primary' : 'text-gray-400 hover:text-gray-600'}
+          >
+            EN
+          </button>
+          <span className="text-gray-300">|</span>
+          <button
+            type="button"
+            onClick={() => setLang('es')}
+            aria-pressed={lang === 'es'}
+            aria-label="Español"
+            className={lang === 'es' ? 'text-steward-primary' : 'text-gray-400 hover:text-gray-600'}
+          >
+            ES
+          </button>
+        </div>
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
@@ -110,24 +134,6 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
                 >
                   {t('menu.releaseNotes')}
                 </button>
-                <div className="border-t border-gray-100 my-1" />
-                <div className="px-4 py-2">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1">{t('menu.language')}</p>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setLang('en')}
-                      className={`flex-1 py-1 text-xs rounded ${lang === 'en' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {t('menu.languageEnglish')}
-                    </button>
-                    <button
-                      onClick={() => setLang('es')}
-                      className={`flex-1 py-1 text-xs rounded ${lang === 'es' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {t('menu.languageSpanish')}
-                    </button>
-                  </div>
-                </div>
                 <div className="border-t border-gray-100 my-1" />
                 <button
                   onClick={() => { signOut(); setShowMenu(false) }}
