@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.19.0'
+export const APP_VERSION = '2.19.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.19.1',
+    date: '2026-05-18',
+    enhancements: [
+      'Home-screen / PWA icon redesigned: bright blue background (matching the Gathered "S" chip) with a large gold checkmark replacing the white "S" letter. Part of the cross-app icon refresh — each app\'s icon is now its brand color + its gold accent shape. icon-192.png, icon-512.png, apple-touch-icon.png, and favicon.png all regenerated from a single public/icon.svg.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.19.0',
     date: '2026-05-18',
