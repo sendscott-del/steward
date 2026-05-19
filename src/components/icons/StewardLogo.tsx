@@ -4,13 +4,19 @@ interface Props {
   className?: string
 }
 
-// Stylized "S" formed as two flowing arcs with a gold checkmark
-// in the upper-right counter — the "done" detail. Sits inside a
-// rounded navy square (or white square in inverse).
+/**
+ * Steward brand mark. Matches the v2.19.1 home-screen / PWA icon:
+ *   - rounded square in Steward brand blue (#2563EB — the same blue the
+ *     Gathered "S" chip uses), or white in `inverse`
+ *   - large gold checkmark centered, no letter
+ *
+ * The white-"S" letterform that used to live here is gone; the suite-wide
+ * convention is now "brand color + per-app gold accent shape," with the
+ * "Steward" wordmark appearing as adjacent text wherever the logo is used.
+ */
 export function StewardLogo({ size = 44, variant = 'mark', className }: Props) {
   const isInverse = variant === 'inverse'
-  const containerBg = isInverse ? '#FFFFFF' : '#1B3A6B'
-  const stroke = isInverse ? '#1B3A6B' : '#FFFFFF'
+  const containerBg = isInverse ? '#FFFFFF' : '#2563EB'
   const accent = '#C9A84C'
   const containerStyle: React.CSSProperties = {
     width: size,
@@ -23,7 +29,9 @@ export function StewardLogo({ size = 44, variant = 'mark', className }: Props) {
     border: isInverse ? '1px solid #E5E7EB' : 'none',
     flexShrink: 0,
   }
-  const glyph = Math.round(size * 0.6)
+  // Scale the glyph generously so the check dominates the square — same
+  // proportion as the rasterized home-screen icon.
+  const glyph = Math.round(size * 0.7)
   return (
     <span style={containerStyle} className={className}>
       <svg
@@ -35,17 +43,9 @@ export function StewardLogo({ size = 44, variant = 'mark', className }: Props) {
         aria-label="Steward"
       >
         <path
-          d="M48 19 C 44 13, 36 11, 28 13 C 18 16, 16 26, 26 30 C 32 32, 38 32, 42 36 C 48 41, 44 50, 34 51 C 24 52, 18 48, 14 43"
-          stroke={stroke}
-          strokeWidth={6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M44 22 L48 26 L54 18"
+          d="M14 33 L26 45 L50 18"
           stroke={accent}
-          strokeWidth={3.5}
+          strokeWidth={8}
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"

@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.19.0'
+export const APP_VERSION = '2.19.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.19.1',
+    date: '2026-05-19',
+    enhancements: [
+      'Home-screen / PWA icon redesigned: bright blue background (matching the Gathered "S" chip) with a large gold checkmark replacing the white-"S" letter. icon-192.png, icon-512.png, apple-touch-icon.png, and favicon.png regenerated from a single public/icon.svg.',
+      'In-app StewardLogo updated to match: the rounded square is now Steward brand blue (#2563EB) and the "S" letterform is gone, replaced by a large gold checkmark — the same treatment now used on every Gathered app\'s home-screen icon. The "Steward" wordmark continues to appear as adjacent text wherever the logo is used.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.19.0',
     date: '2026-05-18',
