@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.18.6'
+export const APP_VERSION = '2.19.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.19.0',
+    date: '2026-05-18',
+    enhancements: [
+      'Suite consistency pass (2/5): EN/ES toggle promoted out of the hamburger menu and into the top app bar. One tap to switch language from any screen — matching the pattern across the Gathered suite.',
+      'PWA theme color tuned to match the Gathered chip: home-screen browser chrome and PWA install background now use Steward\'s brand blue (#2563EB), the same blue used by the "S" chip in the Gathered switcher. Removes the dark-navy mismatch between the suite chrome and the per-app brand.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.18.6',
     date: '2026-05-10',
