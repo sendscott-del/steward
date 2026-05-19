@@ -5,19 +5,21 @@ interface Props {
 }
 
 /**
- * Steward brand mark. Matches the v2.19.1 home-screen / PWA icon:
+ * Steward brand mark. Matches the v2.19.2 home-screen / PWA icon:
  *   - rounded square in Steward brand blue (#2563EB — the same blue the
  *     Gathered "S" chip uses), or white in `inverse`
- *   - large gold checkmark centered, no letter
+ *   - large white checkmark centered, no letter
  *
- * The white-"S" letterform that used to live here is gone; the suite-wide
- * convention is now "brand color + per-app gold accent shape," with the
- * "Steward" wordmark appearing as adjacent text wherever the logo is used.
+ * The default treatment is brand color + white glyph (was gold). iOS
+ * Tinted / sleep mode auto-renders white-on-color as gold-on-black, which
+ * is the appearance the user wants in tinted mode; keeping the source
+ * glyph white gives both modes the right color story.
  */
 export function StewardLogo({ size = 44, variant = 'mark', className }: Props) {
   const isInverse = variant === 'inverse'
   const containerBg = isInverse ? '#FFFFFF' : '#2563EB'
-  const accent = '#C9A84C'
+  // White over the brand-color container; brand color over the inverse white container.
+  const accent = isInverse ? '#2563EB' : '#FFFFFF'
   const containerStyle: React.CSSProperties = {
     width: size,
     height: size,
