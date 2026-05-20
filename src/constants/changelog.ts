@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.19.2'
+export const APP_VERSION = '2.19.3'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.19.3',
+    date: '2026-05-19',
+    enhancements: [
+      'Favicon (browser tab + Chrome bookmark bar) regenerated to match the home-screen icon. public/favicon.ico is actually a 32x32 PNG (despite the .ico extension) and still held the old design, so Chrome\'s bookmark bar kept showing the wrong glyph. Re-rendered from the current bright-blue + white-checkmark icon master.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.19.2',
     date: '2026-05-19',
