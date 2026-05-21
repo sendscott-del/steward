@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.20.0'
+export const APP_VERSION = '2.20.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.20.1',
+    date: '2026-05-20',
+    enhancements: [
+      'Suggestion FAB copy trimmed — removed the "Goes straight to Scott." line under the prompt so the modal stays focused on the question itself.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.20.0',
     date: '2026-05-20',
