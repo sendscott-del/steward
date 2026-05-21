@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.19.3'
+export const APP_VERSION = '2.20.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.20.0',
+    date: '2026-05-20',
+    enhancements: [
+      'Suggestion FAB added — a small blue lightbulb in the bottom-right corner of every screen (just above the bottom tab bar). Tap it to send a free-form idea or friction note. Submissions land in the shared `app_suggestions` table on the Gathered Supabase project and trigger an email to Scott via Resend, so all of the suite (Steward, Glean, Knit, Tidings, Magnify) now feeds one inbox you can triage and mark `in_progress` / `implemented` / `declined`. The submitter\'s name, email, user id, and current page URL are captured automatically when signed in.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.19.3',
     date: '2026-05-19',

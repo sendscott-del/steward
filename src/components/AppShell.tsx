@@ -8,6 +8,7 @@ import { ClipboardList, StickyNote, BookOpen, Menu, X, Users } from 'lucide-reac
 import AppSwitcher from './AppSwitcher'
 import { StewardLogo } from './icons/StewardLogo'
 import { DemoModeToggle } from './DemoModeBanner'
+import SuggestionFAB from './SuggestionFAB'
 
 export type TabId = 'work' | 'reflect' | 'notes'
 
@@ -182,6 +183,7 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
           <span className="mt-0.5">{t('tab.notes')}</span>
         </button>
       </nav>
+      <SuggestionFAB />
     </div>
   )
 }

@@ -139,6 +139,19 @@ export default function GuidePage() {
           <p className="mt-2 text-xs text-gray-500">To become an admin, add your user ID to the steward_admins table in Supabase.</p>
         </Section>
 
+        <Section title="Suggest an Enhancement">
+          <p className="mb-2">
+            Look for the small <strong>blue lightbulb</strong> in the bottom-right corner of every screen
+            (just above the tab bar). Tap it, type what you&apos;d change or what felt clunky, and hit{' '}
+            <strong>Send</strong>.
+          </p>
+          <p>
+            Your name, email, and the page you were on are attached automatically. Suggestions go straight
+            to Scott (one email per submission) and into a shared tracker so you can be told later when an
+            idea was implemented.
+          </p>
+        </Section>
+
         <Section title="Tips for Effective Steward">
           <ul className="list-disc list-inside space-y-1">
             <li>Review your Steward first thing each day — plan which behaviors to focus on</li>
