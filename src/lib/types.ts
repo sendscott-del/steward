@@ -6,12 +6,14 @@ export type StakeRole =
   | 'first_counselor'
   | 'second_counselor'
   | 'exec_secretary'
+  | 'stake_clerk'
 
 export const STAKE_ROLE_LABELS: Record<StakeRole, string> = {
   stake_president: 'Stake President',
   first_counselor: 'First Counselor',
   second_counselor: 'Second Counselor',
   exec_secretary: 'Executive Secretary',
+  stake_clerk: 'Stake Clerk',
 }
 
 // Map a calling/template name to the corresponding stake role.
@@ -20,14 +22,16 @@ export const STAKE_ROLE_LABELS: Record<StakeRole, string> = {
 //
 // This is the single source of truth for the "calling = role" merge:
 // admins pick a calling/template in the UI, and stake_role is derived
-// from this mapping. To grant exec_secretary without a behavior set,
-// create or rename a template to "Executive Secretary".
+// from this mapping. To grant exec_secretary or stake_clerk without a
+// behavior set, create or rename a template to "Executive Secretary"
+// or "Stake Clerk".
 export function stakeRoleFromTemplateName(name: string | null | undefined): StakeRole | null {
   switch (name) {
     case 'Stake President':     return 'stake_president'
     case 'First Counselor':     return 'first_counselor'
     case 'Second Counselor':    return 'second_counselor'
     case 'Executive Secretary': return 'exec_secretary'
+    case 'Stake Clerk':         return 'stake_clerk'
     default:                    return null
   }
 }

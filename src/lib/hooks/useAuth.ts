@@ -108,7 +108,8 @@ export function useAuth() {
     stakeRole === 'stake_president' ||
     stakeRole === 'first_counselor' ||
     stakeRole === 'second_counselor' ||
-    stakeRole === 'exec_secretary'
+    stakeRole === 'exec_secretary' ||
+    stakeRole === 'stake_clerk'
 
   return { user, loading, isAdmin, adminLoading, userStatus, statusLoading, stakeRole, canManageInterviews, signOut, refreshStatus }
 }

@@ -50,6 +50,7 @@ export function useInterviews(year: number, currentUserId: string | undefined): 
           'first_counselor',
           'second_counselor',
           'exec_secretary',
+          'stake_clerk',
         ]),
     ])
 

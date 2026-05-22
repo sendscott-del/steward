@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.20.1'
+export const APP_VERSION = '2.21.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.21.0',
+    date: '2026-05-22',
+    enhancements: [
+      'Stake Clerk added as a recognized stake_role. The four existing roles (Stake President, First Counselor, Second Counselor, Executive Secretary) now stand alongside Stake Clerk, and a stake clerk has the same RLS access to the /interviews report and home-page card as the other four. Surfaced in the StakeRole type, STAKE_ROLE_LABELS, stakeRoleFromTemplateName, useAuth.canManageInterviews, and the useInterviews member fetch. DB side: steward_user_profiles.stake_role CHECK constraint expanded and steward_caller_can_manage_interviews() helper updated (migration v2.21.0).',
+      'Pre-provisioned four presidency-circle profiles ahead of rollout: Celso Alvarez (First Counselor, First Counselor template selected), Walter Vielman (Second Counselor, Second Counselor template selected), Blake Bartolomei (Executive Secretary, no template), Jeff Tingey (Stake Clerk, no template). Each got a steward_user_profiles row with status=approved and a matching user_apps row so Steward shows up in their Gathered switcher. Sign-in works immediately with their existing Magnify credentials since the four church apps share one auth project.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.20.1',
     date: '2026-05-20',
