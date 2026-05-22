@@ -104,6 +104,35 @@ export default function InterviewsPage() {
     return { total, done, currentTotal, currentDone }
   }, [visibleGroups, currentQ])
 
+  // Per-assignee summary for the current quarter — assigned vs. completed.
+  // Uses the unfiltered `groups` (not visibleGroups) so the summary always
+  // reflects the full picture even when the user has filtered the grid.
+  // Sorted: unassigned last; then by % done ascending so the people with the
+  // most outstanding interviews surface first.
+  const quarterSummary = useMemo(() => {
+    type Row = { userId: string | null; assigned: number; done: number }
+    const map = new Map<string, Row>()
+    for (const g of groups) {
+      const iv = g.byQuarter.get(currentQ)
+      if (!iv) continue
+      const key = iv.assigned_to_user_id ?? '__unassigned__'
+      const row = map.get(key) ?? { userId: iv.assigned_to_user_id, assigned: 0, done: 0 }
+      row.assigned += 1
+      if (iv.completed_at) row.done += 1
+      map.set(key, row)
+    }
+    const rows = Array.from(map.values())
+    rows.sort((a, b) => {
+      if (a.userId === null) return 1
+      if (b.userId === null) return -1
+      const aPct = a.assigned === 0 ? 1 : a.done / a.assigned
+      const bPct = b.assigned === 0 ? 1 : b.done / b.assigned
+      if (aPct !== bPct) return aPct - bPct
+      return b.assigned - a.assigned
+    })
+    return rows
+  }, [groups, currentQ])
+
   if (loading || statusLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Loading…</div>
@@ -212,6 +241,69 @@ export default function InterviewsPage() {
           <span className="font-semibold text-gray-700">{stats.currentTotal}</span> done this
           quarter · <span className="font-semibold text-gray-700">{stats.done}</span>/{stats.total} this year
         </div>
+
+        {/* Per-assignee summary for the current quarter */}
+        {quarterSummary.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                Q{currentQ} {year} — by assignee
+              </h2>
+              <span className="text-[11px] text-gray-500">
+                Counts every interviewee with a row in Q{currentQ} of {year}.
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-white border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-semibold">Assignee</th>
+                    <th className="text-right px-3 py-2 font-semibold">Assigned</th>
+                    <th className="text-right px-3 py-2 font-semibold">Completed</th>
+                    <th className="text-left px-3 py-2 font-semibold w-[40%]">Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quarterSummary.map((row) => {
+                    const pct = row.assigned === 0 ? 0 : Math.round((row.done / row.assigned) * 100)
+                    const label = row.userId === null
+                      ? 'Unassigned'
+                      : memberLabel(members, row.userId)
+                    return (
+                      <tr key={row.userId ?? '__unassigned__'} className="border-b border-gray-100 last:border-b-0">
+                        <td className="px-3 py-2 text-gray-900 font-medium">
+                          {label}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-700">{row.assigned}</td>
+                        <td className="px-3 py-2 text-right text-gray-700">
+                          {row.done}
+                          {row.done > 0 && row.done === row.assigned && (
+                            <span className="ml-1 text-emerald-600">✓</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${
+                                  pct === 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                                }`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] text-gray-500 tabular-nums w-9 text-right">
+                              {pct}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Grid */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">

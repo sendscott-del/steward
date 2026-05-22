@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.22.0'
+export const APP_VERSION = '2.23.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.23.0',
+    date: '2026-05-22',
+    enhancements: [
+      "Quarterly interviews page has a new per-assignee summary table above the main grid. For the current quarter, it shows each presidency member with their assigned count, completed count, and a progress bar. The order surfaces who has the most outstanding interviews first (lowest completion % at top), so the stake president can see at a glance who needs a nudge. Unassigned interviewees collapse into a final row labeled 'Unassigned' so they don't disappear. The summary always reflects the full picture — it isn't affected by the 'filter by presidency member' selector above, so you can drill into one person's grid without losing the overall view.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.22.0',
     date: '2026-05-22',
