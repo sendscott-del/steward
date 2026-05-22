@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.21.0'
+export const APP_VERSION = '2.22.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.22.0',
+    date: '2026-05-22',
+    enhancements: [
+      "New /admin/roles page (linked from the menu as 'Suite roles', super-admins only) lets you assign any of the 19 Gathered suite roles to any signed-in user — Stake President through Ward Member. One person can hold multiple roles; ward-scoped roles take a ward picker. Writes to the shared `gather_user_roles` table — same source of truth Glean, Knit, Magnify read from and Tidings syncs into.",
+      "Quarterly-interview access now also recognizes the 19-role catalog. `steward_caller_can_manage_interviews()` was extended to accept gather_user_roles membership in stake_president / sp_1st_counselor / sp_2nd_counselor / stake_exec_secretary / stake_clerk / high_councilor — same five logical roles as before, just also via the suite table. The spreadsheet flags Stake Executive Secretary specifically for interview editing, and a new `steward_is_stake_exec_secretary()` helper is available for future UI/RLS that wants to recognize that role specifically.",
+      "Existing `steward_admins` and `steward_user_profiles.stake_role` checks stay intact — no regression for anyone already provisioned via the legacy paths.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.21.0',
     date: '2026-05-22',

@@ -116,6 +116,12 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
                     >
                       Gather — User access
                     </button>
+                    <button
+                      onClick={() => { router.push('/admin/roles'); setShowMenu(false) }}
+                      className="w-full px-4 py-2 text-left text-sm text-blue-600 font-medium hover:bg-blue-50"
+                    >
+                      Suite roles
+                    </button>
                     <div className="border-t border-gray-100 my-1" />
                   </>
                 )}
