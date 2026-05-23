@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.23.0'
+export const APP_VERSION = '2.24.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.24.0',
+    date: '2026-05-22',
+    enhancements: [
+      "Gather page (/admin/gather) gained a Suggestions section. It pulls from the shared `app_suggestions` table (where the 💡 button on every app posts) and shows a per-app summary table — Open / Backlog / Total — with a green New badge on any app that has unprocessed suggestions. Below the table, each open or backlog suggestion lists in full with submitter, date, and source page URL. Three buttons per item: Add to backlog, Mark complete, Decline. Acting on a suggestion removes it from the view (anything completed or declined is filtered out). Backed by a new `gather_set_suggestion_status` RPC that's locked to super admins via the `gather_super_admins` table.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.23.0',
     date: '2026-05-22',
