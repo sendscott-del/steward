@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.24.0'
+export const APP_VERSION = '2.25.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.25.0',
+    date: '2026-05-22',
+    enhancements: [
+      "Gather is consolidated into Glean. The Steward copy of /admin/gather (which had the Suggestions section added in v2.24.0 hours ago) is now a redirect to https://glean-blue.vercel.app/admin/gather — that's the canonical Gather page from now on. The 'Gather — User access' entry in the admin menu links straight there in a new tab so super admins skip the redirect hop. Bookmarks and the previous in-app path still land somewhere useful via the redirect page. Why: Scott wanted exactly one place to manage user access across all five apps instead of three near-identical copies (Steward, Glean, Knit). Glean wins because it has the most-evolved code — the suite-app filter, the Remove-from-suite control, and today's Suggestions section.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.24.0',
     date: '2026-05-22',

@@ -110,12 +110,15 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
                     >
                       {t('menu.admin')}
                     </button>
-                    <button
-                      onClick={() => { router.push('/admin/gather'); setShowMenu(false) }}
-                      className="w-full px-4 py-2 text-left text-sm text-blue-600 font-medium hover:bg-blue-50"
+                    <a
+                      href="https://glean-blue.vercel.app/admin/gather"
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => setShowMenu(false)}
+                      className="block w-full px-4 py-2 text-left text-sm text-blue-600 font-medium hover:bg-blue-50"
                     >
-                      Gather — User access
-                    </button>
+                      Gather — User access ↗
+                    </a>
                     <button
                       onClick={() => { router.push('/admin/roles'); setShowMenu(false) }}
                       className="w-full px-4 py-2 text-left text-sm text-blue-600 font-medium hover:bg-blue-50"
