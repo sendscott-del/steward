@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.26.0'
+export const APP_VERSION = '2.26.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.26.1',
+    date: '2026-05-23',
+    enhancements: [],
+    bugFixes: [
+      "Admin menu: 'Gather — User access ↗' was still pointing at the old glean-blue.vercel.app URL — now correctly opens https://gathered-admin-neon.vercel.app/gather. Also dropped the duplicate 'Suite roles' menu item; it went to /admin/roles which redirects to the same Gather page, so it was just an extra hop. One entry now does what two used to.",
+    ],
+  },
   {
     version: '2.26.0',
     date: '2026-05-23',
