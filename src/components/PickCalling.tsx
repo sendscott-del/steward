@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { stakeRoleFromTemplateName } from '@/lib/types'
-import type { Template, TemplateCategory, TemplateBehavior } from '@/lib/types'
+import type { Template, TemplateCategory, TemplateBehavior, StakeRole } from '@/lib/types'
 
 interface PickCallingProps {
   userId: string
@@ -11,6 +11,15 @@ interface PickCallingProps {
   defaultName?: string | null
   onDone: () => void
 }
+
+// Admin-only callings — no behaviors to track, just unlocks the Quarterly
+// Interviews page and admin functions. Shown as a fallback when a Stake Clerk
+// or Executive Secretary lands here without their gather_user_roles having
+// been set yet (the normal path is the trigger auto-sets their stake_role).
+const ADMIN_ONLY_CALLINGS: Array<{ stake_role: StakeRole; label: string }> = [
+  { stake_role: 'stake_clerk',    label: 'Stake Clerk' },
+  { stake_role: 'exec_secretary', label: 'Executive Secretary' },
+]
 
 // Self-serve calling picker shown when the user has Steward access (granted in
 // Gather) but no calling template yet. Applies the chosen template inline —
@@ -34,6 +43,30 @@ export default function PickCalling({ userId, userEmail, defaultName, onDone }: 
         setLoading(false)
       })
   }, [])
+
+  async function handleSelectAdminOnly(stakeRole: StakeRole, label: string) {
+    if (!fullName.trim()) {
+      alert('Please enter your name first.')
+      return
+    }
+    setSubmitting(true)
+
+    // No template to apply — just set the profile so they skip the picker
+    // next time. stake_role unlocks Quarterly Interviews + admin.
+    await supabase
+      .from('steward_user_profiles')
+      .update({
+        full_name: fullName.trim(),
+        email: userEmail,
+        selected_template_id: null,
+        selected_template_name: label,
+        stake_role: stakeRole,
+      })
+      .eq('id', userId)
+
+    setSubmitting(false)
+    onDone()
+  }
 
   async function handleSelect(template: Template) {
     if (!fullName.trim()) {
@@ -146,6 +179,27 @@ export default function PickCalling({ userId, userEmail, defaultName, onDone }: 
               ))}
             </div>
           )}
+        </div>
+
+        <div>
+          <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Admin-only (no behaviors to track)
+          </div>
+          <div className="space-y-2">
+            {ADMIN_ONLY_CALLINGS.map(c => (
+              <button
+                key={c.stake_role}
+                onClick={() => handleSelectAdminOnly(c.stake_role, c.label)}
+                disabled={submitting || !fullName.trim()}
+                className="w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-blue-400 hover:bg-blue-50 transition disabled:opacity-50"
+              >
+                <span className="text-sm font-semibold text-gray-800">{c.label}</span>
+                <span className="block text-[11px] text-gray-500 mt-0.5">
+                  Quarterly Interviews + user admin only
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {submitting && (

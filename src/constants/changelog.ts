@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.27.0'
+export const APP_VERSION = '2.27.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.27.1',
+    date: '2026-05-23',
+    enhancements: [
+      "Stake Clerk + Executive Secretary now flow through cleanly. Three changes: (1) new trigger on gather_user_roles also syncs the Steward stake_role — anyone with stake_clerk or stake_exec_secretary in Gather AND Steward access auto-gets stake_role set, skipping the calling picker on first sign-in (Jeff and Blake retroactively backfilled). (2) needsTemplate gate widened from 'no template' to 'no template AND no stake_role' so admin-only users aren't trapped in the picker loop. (3) Picker now has an 'Admin-only (no behaviors to track)' section with Stake Clerk + Executive Secretary as fallback options for anyone who lands there without their gather_user_roles being set.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.27.0',
     date: '2026-05-23',

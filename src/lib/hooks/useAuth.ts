@@ -116,10 +116,13 @@ export function useAuth() {
     stakeRole === 'exec_secretary' ||
     stakeRole === 'stake_clerk'
 
-  // Approved but no template yet — happens when Gather granted S access and the
-  // user hasn't picked their calling yet. They get a self-serve picker.
+  // Approved but neither a template nor a stake_role yet — happens when
+  // Gather granted S access without a stake-level role and the user hasn't
+  // picked their calling. They get a self-serve picker. Users who only need
+  // admin access (Stake Clerk, Exec Secretary) don't have a template but DO
+  // have a stake_role (auto-set from gather_user_roles) — they skip the picker.
   const needsTemplate =
-    !isAdmin && userStatus === 'approved' && !selectedTemplateId
+    !isAdmin && userStatus === 'approved' && !selectedTemplateId && !stakeRole
 
   return {
     user, loading, isAdmin, adminLoading, userStatus, statusLoading,
