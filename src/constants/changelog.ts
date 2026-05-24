@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.27.2'
+export const APP_VERSION = '2.28.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.28.0',
+    date: '2026-05-23',
+    enhancements: [
+      "Admin page redesign. Two tabs (Templates / People) replace the old single-scroll layout. Templates tab is a 3-pane editor: left rail lists every template with per-template assigned-count + behavior-count; center pane is an inline editor (rename in place, drag-style up/down reorder, freq segmented control, every-N stepper, expandable handbook-reference note per behavior); right rail shows who's currently on the selected template. People tab is search + filter chips (All / Needs calling / per-template) over a sectioned list grouped by calling, with an Admin-only section for users who have stake_role but no template.",
+      "Inline auto-save. Renames, behavior edits, freq changes all persist immediately to Supabase; a 'Saving / Saved' pill in the editor header surfaces what's happening.",
+      "Pinned 'Needs assignment' banner across both tabs surfaces approved users who don't have a calling yet (one click → assign for a single user, or jump to People tab filtered for the queue).",
+      "New template-picker modal replaces the inline calling list. Search, see categories+behaviors counts per template, current calling badge.",
+      "Cross-page link: 'Manage access in Gather ↗' button in the tab bar so it's obvious where access lives (Gather) vs where calling assignment lives (Steward).",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.27.2',
     date: '2026-05-23',
