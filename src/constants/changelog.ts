@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.27.1'
+export const APP_VERSION = '2.27.2'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.27.2',
+    date: '2026-05-23',
+    enhancements: [],
+    bugFixes: [
+      "Admin page: Stake Clerk / Executive Secretary no longer show up in 'Needs calling assignment' once their stake_role is set. The user-side needsTemplate check already skipped them (set in v2.27.1), but the admin section was only filtering on selected_template_id being null. Now filters on both — and AllUsersSection widens to include users who have stake_role even without a template, so admin-only users appear under 'Active Users' instead of vanishing.",
+    ],
+  },
   {
     version: '2.27.1',
     date: '2026-05-23',

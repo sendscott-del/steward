@@ -76,11 +76,15 @@ function NeedsCallingSection() {
 
   const fetchUsers = useCallback(async () => {
     const [usersRes, templatesRes] = await Promise.all([
+      // Truly unconfigured: no template AND no stake_role. Users who only
+      // need admin access (Stake Clerk, Exec Secretary) have stake_role set
+      // by the gather_user_roles trigger and shouldn't appear here.
       supabase
         .from('steward_user_profiles')
         .select('*')
         .eq('status', 'approved')
         .is('selected_template_id', null)
+        .is('stake_role', null)
         .order('created_at'),
       supabase.from('steward_templates').select('*').order('name'),
     ])
@@ -202,13 +206,15 @@ function AllUsersSection() {
 
   const fetchUsers = useCallback(async () => {
     const [usersRes, templatesRes] = await Promise.all([
-      // Only show users with a calling assigned — the unassigned ones live in
-      // NeedsCallingSection above so they don't double-render here.
+      // Show users who are set up — either have a calling template OR have a
+      // stake_role (admin-only users like Stake Clerk / Exec Secretary).
+      // Truly unconfigured users (no template AND no stake_role) live in
+      // NeedsCallingSection above and don't double-render here.
       supabase
         .from('steward_user_profiles')
         .select('*')
         .eq('status', 'approved')
-        .not('selected_template_id', 'is', null)
+        .or('selected_template_id.not.is.null,stake_role.not.is.null')
         .order('full_name'),
       supabase.from('steward_templates').select('*').order('name'),
     ])
