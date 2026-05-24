@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.25.0'
+export const APP_VERSION = '2.26.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.26.0',
+    date: '2026-05-23',
+    enhancements: [
+      "Gather has its own home now: https://gathered-admin-neon.vercel.app/gather. The standalone deployment supersedes the consolidated-into-Glean home from last release. Steward's /admin/gather and /admin/roles routes are redirects, and the admin menu links straight to the new host in a new tab. Same shared tables underneath (gather_user_roles, user_apps, gather_super_admins) — only the UI moved.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.25.0',
     date: '2026-05-22',
