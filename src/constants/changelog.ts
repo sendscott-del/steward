@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.26.1'
+export const APP_VERSION = '2.27.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.27.0',
+    date: '2026-05-23',
+    enhancements: [
+      "Access control deferred to Gather. A new Postgres trigger on user_apps watches the S toggle: granting Steward access auto-creates a steward_user_profiles row with status='approved'; revoking it sets status='rejected' (data preserved). Steward admins no longer need to approve/reject signups — that decision lives in Gather.",
+      "First-run calling picker. When a user has Steward access but no calling template yet (e.g. just granted in Gather), they see a 'Pick your calling' screen on sign-in. Picking a calling applies the template inline (creates their categories + behaviors) — no admin step required.",
+      "Admin page reframe. 'Pending Approvals' renamed to 'Needs calling assignment' — now lists approved users who haven't picked a calling. Single 'Assign calling' tap applies the template; the separate Approve / Reject buttons are gone. 'Remove' button on each Active User row is also gone — toggle S off in Gather to revoke access (the trigger handles the rest, and data is preserved).",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.26.1',
     date: '2026-05-23',

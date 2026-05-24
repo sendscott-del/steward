@@ -15,6 +15,7 @@ export function useAuth() {
   const [userStatus, setUserStatus] = useState<UserStatus>(null)
   const [statusLoading, setStatusLoading] = useState(true)
   const [stakeRole, setStakeRole] = useState<StakeRole | null>(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const checkedUserId = useRef<string | null>(null)
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export function useAuth() {
       setUserStatus(null)
       setStatusLoading(false)
       setStakeRole(null)
+      setSelectedTemplateId(null)
       checkedUserId.current = null
       return
     }
@@ -66,19 +68,21 @@ export function useAuth() {
         }
       })
 
-    // Check user profile status + stake role
+    // Check user profile status + stake role + template assignment
     supabase
       .from('steward_user_profiles')
-      .select('status, stake_role')
+      .select('status, stake_role, selected_template_id')
       .eq('id', uid)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setUserStatus(data.status as UserStatus)
           setStakeRole((data.stake_role as StakeRole | null) ?? null)
+          setSelectedTemplateId((data.selected_template_id as string | null) ?? null)
         } else {
           setUserStatus('new') // no profile yet — needs to pick a calling
           setStakeRole(null)
+          setSelectedTemplateId(null)
         }
         setStatusLoading(false)
         checkedUserId.current = uid
@@ -94,12 +98,13 @@ export function useAuth() {
     if (!user?.id) return
     const { data } = await supabase
       .from('steward_user_profiles')
-      .select('status, stake_role')
+      .select('status, stake_role, selected_template_id')
       .eq('id', user.id)
       .maybeSingle()
     if (data) {
       setUserStatus(data.status as UserStatus)
       setStakeRole((data.stake_role as StakeRole | null) ?? null)
+      setSelectedTemplateId((data.selected_template_id as string | null) ?? null)
     }
   }
 
@@ -111,5 +116,14 @@ export function useAuth() {
     stakeRole === 'exec_secretary' ||
     stakeRole === 'stake_clerk'
 
-  return { user, loading, isAdmin, adminLoading, userStatus, statusLoading, stakeRole, canManageInterviews, signOut, refreshStatus }
+  // Approved but no template yet — happens when Gather granted S access and the
+  // user hasn't picked their calling yet. They get a self-serve picker.
+  const needsTemplate =
+    !isAdmin && userStatus === 'approved' && !selectedTemplateId
+
+  return {
+    user, loading, isAdmin, adminLoading, userStatus, statusLoading,
+    stakeRole, selectedTemplateId, needsTemplate,
+    canManageInterviews, signOut, refreshStatus,
+  }
 }

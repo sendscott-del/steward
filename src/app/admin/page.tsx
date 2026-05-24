@@ -44,7 +44,7 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-3xl mx-auto p-4 space-y-8">
-        <PendingUsersSection />
+        <NeedsCallingSection />
         <AllUsersSection />
         <TemplatesSection userId={user.id} />
       </div>
@@ -65,15 +65,23 @@ interface UserProfile {
   created_at: string
 }
 
-function PendingUsersSection() {
+// Users who have Steward access (granted in Gather) but haven't been assigned
+// a calling template yet. Admin picks one and it gets applied immediately —
+// no separate approve/reject step (Gather owns that decision).
+function NeedsCallingSection() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
-  const [changingTemplate, setChangingTemplate] = useState<string | null>(null)
+  const [assigning, setAssigning] = useState<string | null>(null)
 
   const fetchUsers = useCallback(async () => {
     const [usersRes, templatesRes] = await Promise.all([
-      supabase.from('steward_user_profiles').select('*').eq('status', 'pending').order('created_at'),
+      supabase
+        .from('steward_user_profiles')
+        .select('*')
+        .eq('status', 'approved')
+        .is('selected_template_id', null)
+        .order('created_at'),
       supabase.from('steward_templates').select('*').order('name'),
     ])
     setUsers((usersRes.data ?? []) as UserProfile[])
@@ -83,25 +91,17 @@ function PendingUsersSection() {
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
-  async function handleApprove(userProfile: UserProfile) {
-    if (!userProfile.selected_template_id) {
-      alert('No calling selected. Please assign a calling first.')
-      return
-    }
+  async function handleAssignCalling(userId: string, template: Template) {
+    setAssigning(userId)
 
-    // Apply the template to the user
-    const templateId = userProfile.selected_template_id
-    const userId = userProfile.id
-
-    // Clear any existing data
+    // Defensive: clear any orphan categories/behaviors before applying
     await supabase.from('steward_behaviors').delete().eq('user_id', userId)
     await supabase.from('steward_categories').delete().eq('user_id', userId)
 
-    // Fetch and apply template
     const { data: tCats } = await supabase
       .from('steward_template_categories')
       .select('*')
-      .eq('template_id', templateId)
+      .eq('template_id', template.id)
       .order('sort_order')
 
     if (tCats) {
@@ -111,7 +111,6 @@ function PendingUsersSection() {
           .insert({ user_id: userId, name: tCat.name, sort_order: tCat.sort_order })
           .select('id')
           .single()
-
         if (!newCat) continue
 
         const { data: tBehs } = await supabase
@@ -136,28 +135,14 @@ function PendingUsersSection() {
       }
     }
 
-    // Mark as approved + derive stake_role from the chosen calling
+    // Update calling + derived stake_role. Status stays 'approved'.
     await supabase.from('steward_user_profiles').update({
-      status: 'approved',
-      approved_at: new Date().toISOString(),
-      stake_role: stakeRoleFromTemplateName(userProfile.selected_template_name),
+      selected_template_id: template.id,
+      selected_template_name: template.name,
+      stake_role: stakeRoleFromTemplateName(template.name),
     }).eq('id', userId)
 
-    fetchUsers()
-  }
-
-  async function handleReject(user: UserProfile) {
-    if (!confirm(`Reject access for ${user.email}? They won't be able to sign in.`)) return
-    await supabase.from('steward_user_profiles').update({ status: 'rejected' }).eq('id', user.id)
-    fetchUsers()
-  }
-
-  async function handleChangeCalling(userId: string, templateId: string, templateName: string) {
-    await supabase.from('steward_user_profiles').update({
-      selected_template_id: templateId,
-      selected_template_name: templateName,
-    }).eq('id', userId)
-    setChangingTemplate(null)
+    setAssigning(null)
     fetchUsers()
   }
 
@@ -166,61 +151,39 @@ function PendingUsersSection() {
 
   return (
     <div>
-      <h2 className="text-sm font-bold text-gray-700 mb-3">Pending Approvals ({users.length})</h2>
+      <h2 className="text-sm font-bold text-gray-700 mb-1">Needs calling assignment ({users.length})</h2>
+      <p className="text-xs text-gray-500 mb-3">
+        Access is granted in Gather. Pick the calling template each user should follow.
+      </p>
       <div className="space-y-2">
         {users.map(u => (
           <div key={u.id} className="bg-white rounded-xl border border-amber-200 shadow-sm p-4">
-            <div className="flex items-start justify-between mb-2">
+            <div className="flex items-start justify-between mb-3">
               <div>
-                <div className="text-sm font-semibold text-gray-800">{u.full_name || 'Unknown'}</div>
+                <div className="text-sm font-semibold text-gray-800">{u.full_name || u.email || 'Unknown'}</div>
                 <div className="text-xs text-gray-400">{u.email}</div>
               </div>
               <div className="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
-                Pending
+                No calling
               </div>
             </div>
 
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs text-gray-500">Calling:</span>
-              <span className="text-xs font-medium text-gray-700">{u.selected_template_name || 'None selected'}</span>
-              <button
-                onClick={() => setChangingTemplate(changingTemplate === u.id ? null : u.id)}
-                className="text-[10px] text-blue-600 hover:underline"
-              >
-                Change
-              </button>
+            <div className="text-[10px] text-gray-500 font-medium mb-1">Assign calling:</div>
+            <div className="space-y-1">
+              {templates.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => handleAssignCalling(u.id, t)}
+                  disabled={assigning === u.id}
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition disabled:opacity-50"
+                >
+                  {t.name}
+                </button>
+              ))}
             </div>
-
-            {changingTemplate === u.id && (
-              <div className="mb-3 space-y-1">
-                {templates.map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleChangeCalling(u.id, t.id, t.name)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition ${
-                      t.id === u.selected_template_id ? 'bg-blue-50 border border-blue-200 text-blue-700 font-medium' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {t.name}
-                  </button>
-                ))}
-              </div>
+            {assigning === u.id && (
+              <p className="text-[10px] text-gray-400 mt-2">Applying template…</p>
             )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleApprove(u)}
-                className="flex-1 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700"
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => handleReject(u)}
-                className="px-4 py-2 text-red-600 bg-red-50 rounded-lg text-xs font-medium hover:bg-red-100"
-              >
-                Reject
-              </button>
-            </div>
           </div>
         ))}
       </div>
@@ -239,7 +202,14 @@ function AllUsersSection() {
 
   const fetchUsers = useCallback(async () => {
     const [usersRes, templatesRes] = await Promise.all([
-      supabase.from('steward_user_profiles').select('*').eq('status', 'approved').order('full_name'),
+      // Only show users with a calling assigned — the unassigned ones live in
+      // NeedsCallingSection above so they don't double-render here.
+      supabase
+        .from('steward_user_profiles')
+        .select('*')
+        .eq('status', 'approved')
+        .not('selected_template_id', 'is', null)
+        .order('full_name'),
       supabase.from('steward_templates').select('*').order('name'),
     ])
     setUsers((usersRes.data ?? []) as UserProfile[])
@@ -308,12 +278,9 @@ function AllUsersSection() {
     fetchUsers()
   }
 
-  async function handleRemoveAccess(userId: string, name: string) {
-    if (!confirm(`Remove access for ${name}? Their data will be preserved but they won't be able to log in.`)) return
-
-    await supabase.from('steward_user_profiles').update({ status: 'rejected' }).eq('id', userId)
-    fetchUsers()
-  }
+  // Removing access is owned by Gather now — toggle the S tile off in
+  // gathered-admin-neon.vercel.app/gather and the user_apps trigger will set
+  // this user's steward_user_profiles.status to 'rejected'.
 
   if (loading) return null
 
@@ -378,12 +345,6 @@ function AllUsersSection() {
                 className="flex-1 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
               >
                 {changingTemplate === u.id ? 'Cancel' : 'Change Calling'}
-              </button>
-              <button
-                onClick={() => handleRemoveAccess(u.id, u.full_name || 'this user')}
-                className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
-              >
-                Remove
               </button>
             </div>
           </div>

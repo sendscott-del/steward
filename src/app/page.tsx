@@ -20,10 +20,11 @@ import CallingPicker from '@/components/CallingPicker'
 import SaveAsTemplateModal from '@/components/SaveAsTemplateModal'
 import NewUserSetup from '@/components/NewUserSetup'
 import PendingApproval from '@/components/PendingApproval'
+import PickCalling from '@/components/PickCalling'
 import type { EntryValue } from '@/lib/types'
 
 export default function HomePage() {
-  const { user, isAdmin, userStatus, statusLoading, signOut, refreshStatus } = useAuth()
+  const { user, isAdmin, userStatus, statusLoading, needsTemplate, signOut, refreshStatus } = useAuth()
   const [activeTab, setActiveTab] = useState<TabId>('work')
   const [showCallingPicker, setShowCallingPicker] = useState(false)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
@@ -130,9 +131,24 @@ export default function HomePage() {
     )
   }
 
-  // Pending approval
+  // Pending approval (legacy self-signup flow — Gather-granted users skip this
+  // because the trigger sets status='approved' directly)
   if (!isAdmin && userStatus === 'pending') {
     return <PendingApproval onRefresh={refreshStatus} onSignOut={signOut} />
+  }
+
+  // Approved via Gather but no calling picked yet — self-serve picker
+  if (needsTemplate && user) {
+    return (
+      <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
+        <PickCalling
+          userId={user.id}
+          userEmail={user.email ?? ''}
+          defaultName={(user.user_metadata?.full_name as string | undefined) ?? null}
+          onDone={refreshStatus}
+        />
+      </AppShell>
+    )
   }
 
   // Rejected
