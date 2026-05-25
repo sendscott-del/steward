@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.28.0'
+export const APP_VERSION = '2.29.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.29.0',
+    date: '2026-05-24',
+    enhancements: [
+      "Mobile + web optimization (Phase 6). Suite-wide chrome refresh matching Knit, Glean, and Tidings: 4-tab bottom nav on mobile (Work / Reflect / Notes / More), full-width MoreSheet that retires the 3-dot kebab menu, and a 200-px navy DesktopSidebar at md:+ with Work / Reflect / Notes / Quarterly Interviews up top and Admin / Guide / Release Notes / Sign Out at the bottom. The kebab dropdown is gone — everything that used to hide behind 3 dots now sits in a labeled, grouped sheet on mobile and a permanent sidebar on desktop.",
+      "Calling-first Work tab. The page now leads with a 'YOUR CALLING' eyebrow + your calling name in bold; three frequency sections (This Week / This Month / This Quarter) replace the per-category headers. Each behavior row is a 56-px tappable card with a 44-px circular check on the right and a streak / 'Skipped last week' / compliance line under the name. Tap the row to open the cell modal (value + comment); tap the circle to mark done. Family / Personal categories collapse into an opt-in 'Add-on habits' disclosure at the bottom.",
+      "Quarterly Interviews overdue badge. New useInterviewsOverdue hook fetches the current year's interviews once and counts past-quarter incompletes. The number renders as a red badge next to the Interviews link in the DesktopSidebar and as a red 'N overdue' meta line + left red rail in the MoreSheet — so the urgency is visible before opening the page. Gated on canManageInterviews; users without that permission never see it.",
+      "Desktop layout, properly. Content widens to max-w-6xl with three side-by-side frequency columns on lg+, plus a new 'Recent weeks · last 14' compliance strip below the columns — a passive heatmap showing each calling behavior's last 14 weeks (blue done / red wash missed / gray skip). The SuggestionFAB hides on mobile (it used to cover checklist rows at bottom-20 right-4) and lives as a 40-px corner button at bottom-6 right-6 on desktop only.",
+      "Safe-area + iOS polish. All mobile form inputs (textareas, text fields, selects) now render at 16-px to stop iOS Safari from auto-zooming on focus. New .safe-pb-tabbar utility pads the bottom of main by 64px + env(safe-area-inset-bottom) so the iPhone home indicator never sits on top of tab labels.",
+      "Bilingual More tab. New EN + ES keys for nav.more, more.stewardship, more.workspace, more.help, more.suggest, more.overdue, menu.interviews, menu.demoMode, menu.gatherAccess. Spanish tab labels: Trabajo / Reflexionar / Notas / Más; sheet groups: Mayordomía / Espacio de trabajo / Ayuda.",
+    ],
+    bugFixes: [
+      "FAB no longer covers the last checklist row on mobile. It's now desktop-only; on mobile the 'Suggest an enhancement' row in the MoreSheet opens the same modal.",
+      "Quarterly Interviews is no longer buried behind a 3-dot kebab next to a language toggle. It's a top-of-MoreSheet 'Stewardship' row on mobile and a primary sidebar link on desktop, both surfacing the overdue count.",
+    ],
+  },
   {
     version: '2.28.0',
     date: '2026-05-23',

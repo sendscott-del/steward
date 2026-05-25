@@ -16,6 +16,7 @@ export function useAuth() {
   const [statusLoading, setStatusLoading] = useState(true)
   const [stakeRole, setStakeRole] = useState<StakeRole | null>(null)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+  const [selectedTemplateName, setSelectedTemplateName] = useState<string | null>(null)
   const checkedUserId = useRef<string | null>(null)
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export function useAuth() {
       setStatusLoading(false)
       setStakeRole(null)
       setSelectedTemplateId(null)
+      setSelectedTemplateName(null)
       checkedUserId.current = null
       return
     }
@@ -71,7 +73,7 @@ export function useAuth() {
     // Check user profile status + stake role + template assignment
     supabase
       .from('steward_user_profiles')
-      .select('status, stake_role, selected_template_id')
+      .select('status, stake_role, selected_template_id, selected_template_name')
       .eq('id', uid)
       .maybeSingle()
       .then(({ data }) => {
@@ -79,10 +81,12 @@ export function useAuth() {
           setUserStatus(data.status as UserStatus)
           setStakeRole((data.stake_role as StakeRole | null) ?? null)
           setSelectedTemplateId((data.selected_template_id as string | null) ?? null)
+          setSelectedTemplateName((data.selected_template_name as string | null) ?? null)
         } else {
           setUserStatus('new') // no profile yet — needs to pick a calling
           setStakeRole(null)
           setSelectedTemplateId(null)
+          setSelectedTemplateName(null)
         }
         setStatusLoading(false)
         checkedUserId.current = uid
@@ -98,13 +102,14 @@ export function useAuth() {
     if (!user?.id) return
     const { data } = await supabase
       .from('steward_user_profiles')
-      .select('status, stake_role, selected_template_id')
+      .select('status, stake_role, selected_template_id, selected_template_name')
       .eq('id', user.id)
       .maybeSingle()
     if (data) {
       setUserStatus(data.status as UserStatus)
       setStakeRole((data.stake_role as StakeRole | null) ?? null)
       setSelectedTemplateId((data.selected_template_id as string | null) ?? null)
+      setSelectedTemplateName((data.selected_template_name as string | null) ?? null)
     }
   }
 
@@ -126,7 +131,7 @@ export function useAuth() {
 
   return {
     user, loading, isAdmin, adminLoading, userStatus, statusLoading,
-    stakeRole, selectedTemplateId, needsTemplate,
+    stakeRole, selectedTemplateId, selectedTemplateName, needsTemplate,
     canManageInterviews, signOut, refreshStatus,
   }
 }

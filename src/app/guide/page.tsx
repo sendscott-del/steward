@@ -36,29 +36,22 @@ export default function GuidePage() {
         </Section>
 
         <Section title="The Work Tab">
-          <p>The main tracking grid shows your behaviors organized by category with 7 day columns (Sun-Sat).</p>
+          <p>Calling-first layout. Your calling name sits at the top; behaviors are grouped into three sections — <strong>This Week</strong>, <strong>This Month</strong>, <strong>This Quarter</strong>. Family / Personal categories collapse into an &ldquo;Add-on habits&rdquo; disclosure at the bottom.</p>
           <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>Tap a cell</strong> — Cycles through: empty, Y (green), N (red), back to empty</li>
-            <li><strong>Long-press a cell</strong> (or right-click on desktop) — Opens the comment dialog to add a reflection note</li>
-            <li><strong>Dimmed cells (—)</strong> — Days that don&apos;t apply based on your frequency setting</li>
-            <li><strong>Blue dot</strong> — Indicates a cell has a comment attached</li>
-            <li><strong>Completion bar</strong> — Shows your completion % for the week (only counts applicable days)</li>
+            <li><strong>Tap the circle</strong> on the right of any row — Cycles through: empty → ✓ (done) → ✗ (missed) → — (skipped) → empty</li>
+            <li><strong>Tap the row body</strong> — Opens a detail dialog where you can set the value and add a reflection note</li>
+            <li><strong>Streak / context line</strong> under each name — e.g. &ldquo;7-week streak&rdquo;, &ldquo;Skipped last week&rdquo;, &ldquo;12% L12W&rdquo; — tells you why the row matters at a glance</li>
+            <li><strong>Add-on habits</strong> — Family and Personal categories live in a collapsed section at the bottom; tap to expand</li>
+            <li><strong>Manage</strong> — The button next to your calling header reveals category edit + add behavior controls</li>
           </ul>
         </Section>
 
-        <Section title="View Modes">
-          <p>Switch between three views using the Day/Week/Month buttons at the top:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>Day view</strong> — Shows a single day with all behaviors listed vertically. Each behavior has a large Y/N toggle and shows any comment. Great for days with many tasks (like Sunday)</li>
-            <li><strong>Week view</strong> — The default 7-day grid. Behaviors as rows, days as columns. Best for overall weekly tracking</li>
-            <li><strong>Month view</strong> — Compact heat-map grid showing the entire month. Color-coded cells (green=Y, red=N) let you spot patterns at a glance</li>
-          </ul>
-          <p className="mt-2">Dates stay synced when switching views — if you&apos;re looking at Wednesday in Day view, switching to Week view shows that week.</p>
+        <Section title="Desktop layout">
+          <p>On a tablet or larger screen you get a navy sidebar on the left with Work / Reflect / Notes / Quarterly Interviews up top and Admin / Guide / Release Notes / Sign Out at the bottom. The three frequency sections sit side-by-side, with a &ldquo;Recent weeks · last 14&rdquo; heatmap below — passive look-back, not the place to mark things done.</p>
         </Section>
 
         <Section title="Navigation">
-          <p>Use the left/right arrows to move between days, weeks, or months depending on your current view. Navigation is seamless — going past the last week of a month automatically moves to the next month.</p>
-          <p className="mt-1">Tap the calendar icon to jump back to today.</p>
+          <p>Use the ‹ › arrows above each section to move between weeks, months, or quarters. Past / Future badges next to the period label tap back to today.</p>
         </Section>
 
         <Section title="Frequency Options">
@@ -141,15 +134,21 @@ export default function GuidePage() {
 
         <Section title="Suggest an Enhancement">
           <p className="mb-2">
-            Look for the small <strong>blue lightbulb</strong> in the bottom-right corner of every screen
-            (just above the tab bar). Tap it, type what you&apos;d change or what felt clunky, and hit{' '}
-            <strong>Send</strong>.
+            On mobile, open the <strong>More</strong> tab (bottom-right) and tap <strong>Suggest an enhancement</strong>. On desktop, look for the small <strong>blue lightbulb</strong> in the bottom-right corner of every screen.
           </p>
           <p>
             Your name, email, and the page you were on are attached automatically. Suggestions go straight
             to Scott (one email per submission) and into a shared tracker so you can be told later when an
             idea was implemented.
           </p>
+        </Section>
+
+        <Section title="More tab + sidebar">
+          <p>Everything that used to hide behind the 3-dot menu now sits in two predictable spots:</p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li><strong>Mobile</strong> — tap <strong>More</strong> at the bottom-right of the tab bar. A sheet opens with three groups: <em>Stewardship</em> (Quarterly Interviews, if permitted, with a red overdue count), <em>Workspace</em> (Admin, Gather, Demo mode), and <em>Help</em> (Suggest, User Guide, Release Notes). Sign Out lives at the bottom.</li>
+            <li><strong>Desktop</strong> — the same items live in the left sidebar. Primary nav (Work / Reflect / Notes / Interviews) sits up top; Admin / Guide / Release Notes / Sign Out at the bottom.</li>
+          </ul>
         </Section>
 
         <Section title="Tips for Effective Steward">

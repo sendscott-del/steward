@@ -1,34 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, Plus, Pencil, MessageSquare, Check, X, Minus, CalendarPlus, Info } from 'lucide-react'
-import type { Category, Behavior, Entry, CellComment, EntryValue } from '@/lib/types'
-import { formatDate, isDueThisPeriod } from '@/lib/dates'
-import CalendarMenu from '@/components/CalendarMenu'
-import InfoModal from '@/components/InfoModal'
+import {
+  ChevronLeft, ChevronRight, Check, X, Minus, MoreHorizontal,
+} from 'lucide-react'
+import type { Behavior, Entry, CellComment, EntryValue, Frequency } from '@/lib/types'
+import { formatDate, isDueThisPeriod, getLast12Dates } from '@/lib/dates'
 
 interface PeriodChecklistProps {
   title: string
   periodDate: Date
   periodLabel: string
   periodOffset: number // negative=past, 0=current, positive=future
-  frequency: 'weekly' | 'monthly' | 'quarterly'
-  categories: Category[]
+  frequency: Frequency
   behaviors: Behavior[]
   entries: Map<string, Entry>
   comments: Map<string, CellComment>
   complianceMap: Map<string, number | null>
-  // Categories that have at least one behavior in *any* frequency. Used to
-  // avoid showing the "Add a behavior to this category" placeholder in the
-  // weekly section when the category is actually populated elsewhere (e.g.
-  // a Stake President's INTERVIEWS category has 14 quarterly interviews;
-  // showing it as empty in the weekly section is misleading).
-  populatedCategoryIds: Set<string>
   onToggle: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
-  onComment: (behaviorId: string, date: string) => void
-  onEditBehavior: (behaviorId: string) => void
-  onEditCategory: (categoryId: string) => void
-  onAddBehavior: (categoryId: string) => void
+  onRowOpen: (behaviorId: string, date: string) => void
   onPrev: () => void
   onNext: () => void
   onToday: () => void
@@ -41,24 +31,109 @@ function cycleValue(current: EntryValue | null): EntryValue | null {
   return null
 }
 
-const COMPLIANCE_LABELS: Record<string, string> = {
-  weekly: 'L12W',
-  monthly: 'L12M',
-  quarterly: 'L4Q',
+/**
+ * Compute a short streak / context line for a behavior.
+ * Examples: "7-week streak", "Skipped last week", "12% L12W", "Due this week".
+ * The point is a single, motivating phrase a leader can read in <0.5s — not
+ * a precise stat. Falls back to compliance % when nothing else fires.
+ */
+function streakOrContext(
+  behavior: Behavior,
+  entries: Map<string, Entry>,
+  compliancePct: number | null,
+  frequency: Frequency,
+  periodDate: Date,
+): string | null {
+  const periodKey = `${behavior.id}_${formatDate(periodDate)}`
+  const currentEntry = entries.get(periodKey)
+
+  // Past occurrences in order: most recent first.
+  const past = getLast12Dates(frequency, behavior.interval ?? 1, behavior.anchor_date)
+  // Drop the current period from "past" if included.
+  const today = formatDate(new Date())
+  const trimmed = past.filter((d) => formatDate(d) <= today)
+
+  // Compute current streak — consecutive 'y' (with 'na' counted as skip-not-break)
+  // starting from the most recent past occurrence. Stops at first 'n' or empty.
+  let streak = 0
+  for (const d of trimmed) {
+    const e = entries.get(`${behavior.id}_${formatDate(d)}`)
+    if (e?.value === 'y') streak++
+    else if (e?.value === 'na') continue
+    else break
+  }
+  // If user already marked this period done, add 1.
+  if (currentEntry?.value === 'y') streak++
+
+  const noun = frequency === 'weekly' ? 'week' : frequency === 'monthly' ? 'month' : 'quarter'
+
+  if (streak >= 3) return `${streak}-${noun} streak`
+
+  // Skipped-last context: latest past occurrence was missed or untouched.
+  if (trimmed.length > 0) {
+    const lastKey = `${behavior.id}_${formatDate(trimmed[0])}`
+    const lastEntry = entries.get(lastKey)
+    if (lastEntry?.value === 'n') return `Missed last ${noun}`
+    if (!lastEntry?.value && currentEntry?.value !== 'y') return `Skipped last ${noun}`
+  }
+
+  if (compliancePct != null) {
+    const rounded = Math.round(compliancePct)
+    const label = frequency === 'weekly' ? 'L12W' : frequency === 'monthly' ? 'L12M' : 'L4Q'
+    return `${rounded}% ${label}`
+  }
+
+  return null
+}
+
+function CheckCircle({ value, size = 44 }: { value: EntryValue | null; size?: number }) {
+  const px = size
+  const iconSize = Math.round(size * 0.45)
+  if (value === 'y') {
+    return (
+      <span
+        className="rounded-full bg-steward-primary text-white inline-flex items-center justify-center shrink-0 shadow-[0_2px_6px_rgba(37,99,235,0.35)]"
+        style={{ width: px, height: px }}
+      >
+        <Check size={iconSize} strokeWidth={2.8} />
+      </span>
+    )
+  }
+  if (value === 'n') {
+    return (
+      <span
+        className="rounded-full bg-red-500 text-white inline-flex items-center justify-center shrink-0"
+        style={{ width: px, height: px }}
+      >
+        <X size={iconSize} strokeWidth={2.8} />
+      </span>
+    )
+  }
+  if (value === 'na') {
+    return (
+      <span
+        className="rounded-full bg-gray-300 text-white inline-flex items-center justify-center shrink-0"
+        style={{ width: px, height: px }}
+      >
+        <Minus size={iconSize} strokeWidth={2.8} />
+      </span>
+    )
+  }
+  return (
+    <span
+      className="rounded-full bg-white text-gray-400 border-[1.5px] border-gray-200 inline-flex items-center justify-center shrink-0"
+      style={{ width: px, height: px }}
+    />
+  )
 }
 
 export default function PeriodChecklist({
   title, periodDate, periodLabel, periodOffset, frequency,
-  categories, behaviors, entries, comments, complianceMap,
-  populatedCategoryIds,
-  onToggle, onComment, onEditBehavior, onEditCategory, onAddBehavior,
+  behaviors, entries, comments, complianceMap,
+  onToggle, onRowOpen,
   onPrev, onNext, onToday,
 }: PeriodChecklistProps) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [calendarMenuId, setCalendarMenuId] = useState<string | null>(null)
-  const [infoModal, setInfoModal] = useState<{ name: string; text: string } | null>(null)
   const dateStr = formatDate(periodDate)
-
   const isCurrentPeriod = periodOffset === 0
   const isPast = periodOffset < 0
   const isFuture = periodOffset > 0
@@ -69,209 +144,226 @@ export default function PeriodChecklist({
   )
 
   // Count completion
-  const applicable = dueBehaviors
-  const done = applicable.filter(b => {
+  const done = dueBehaviors.filter(b => {
     const entry = entries.get(`${b.id}_${dateStr}`)
     return entry?.value === 'y' || entry?.value === 'na'
   }).length
-  const total = applicable.length
+  const total = dueBehaviors.length
 
-  // Group behaviors by category
-  const behaviorsByCategory = new Map<string, Behavior[]>()
-  for (const cat of categories) behaviorsByCategory.set(cat.id, [])
-  for (const beh of dueBehaviors) {
-    const list = behaviorsByCategory.get(beh.category_id)
-    if (list) list.push(beh)
-  }
+  if (total === 0) return null
 
   return (
-    <div className="mb-3">
-      {/* Section header */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200"
-      >
-        <div className="flex items-center gap-2">
-          {collapsed ? <ChevronRight size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
-          <h2 className="text-sm md:text-base font-bold text-gray-800">{title}</h2>
-        </div>
-        <span className={`text-xs md:text-sm font-bold ${done === total && total > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+    <section className="mb-4">
+      {/* Section header — steward-blue title + completion count */}
+      <div className="flex items-baseline justify-between px-1 mb-1.5">
+        <h2 className="text-[13px] md:text-sm font-extrabold text-steward-primary-dark uppercase tracking-wide">
+          {title}
+        </h2>
+        <span className="text-[11px] font-semibold text-gray-500">
           {done} of {total} done
         </span>
-      </button>
+      </div>
 
-      {/* Period navigation */}
-      {!collapsed && (
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
-          <button onClick={onPrev} className="p-1 text-gray-400 hover:text-gray-700">
-            <ChevronLeft size={18} />
-          </button>
-          <div className="text-center flex items-center gap-2">
-            <span className="text-xs md:text-sm font-medium text-gray-600">{periodLabel}</span>
-            {isCurrentPeriod ? (
-              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Current</span>
-            ) : isPast ? (
-              <button onClick={onToday} className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded hover:bg-gray-200">
-                Past ↩
-              </button>
-            ) : (
-              <button onClick={onToday} className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded hover:bg-blue-100">
-                Future ↩
-              </button>
-            )}
-          </div>
-          <button onClick={onNext} className="p-1 text-gray-400 hover:text-gray-700">
-            <ChevronRightIcon size={18} />
-          </button>
+      {/* Period navigation row */}
+      <div className="flex items-center gap-1 mb-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          className="w-8 h-8 rounded-md bg-white border border-gray-200 text-gray-600 inline-flex items-center justify-center hover:bg-gray-50"
+          aria-label="Previous period"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div className="flex-1 text-center text-[12px] font-semibold text-gray-700 flex items-center justify-center gap-1.5">
+          <span>{periodLabel}</span>
+          {isCurrentPeriod ? (
+            <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded uppercase tracking-wider">Now</span>
+          ) : isPast ? (
+            <button
+              type="button"
+              onClick={onToday}
+              className="text-[9px] font-extrabold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider hover:bg-gray-200"
+            >
+              Past ↩
+            </button>
+          ) : isFuture ? (
+            <button
+              type="button"
+              onClick={onToday}
+              className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase tracking-wider hover:bg-blue-100"
+            >
+              Future ↩
+            </button>
+          ) : null}
         </div>
-      )}
+        <button
+          type="button"
+          onClick={onNext}
+          className="w-8 h-8 rounded-md bg-white border border-gray-200 text-gray-600 inline-flex items-center justify-center hover:bg-gray-50"
+          aria-label="Next period"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
 
-      {/* Checklist */}
-      {!collapsed && (
-        <div>
-          {categories.map(cat => {
-            const catBehaviors = behaviorsByCategory.get(cat.id) ?? []
-            // Hide a category entirely from this section if it has no behaviors
-            // for this frequency AND it's populated elsewhere — otherwise we
-            // show "Add a behavior" under a category that's actually full of
-            // behaviors in another section, which is confusing.
-            if (catBehaviors.length === 0) {
-              if (frequency !== 'weekly') return null
-              if (populatedCategoryIds.has(cat.id)) return null
-            }
+      {/* Behavior rows — flat list, calling-first */}
+      <div className="space-y-1.5">
+        {dueBehaviors.map(beh => {
+          const key = `${beh.id}_${dateStr}`
+          const entry = entries.get(key)
+          const comment = comments.get(key)
+          const value = entry?.value ?? null
+          const pct = complianceMap.get(beh.id) ?? null
+          const context = streakOrContext(beh, entries, pct, frequency, periodDate)
 
-            return (
-              <div key={cat.id}>
-                {/* Category label */}
-                <div className="flex items-center justify-between px-4 py-1.5 bg-gray-50 border-b border-gray-100">
-                  <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wide">{cat.name}</span>
-                  <div className="flex gap-1">
-                    <button onClick={() => onEditCategory(cat.id)} className="p-0.5 text-gray-300 hover:text-gray-500">
-                      <Pencil size={10} />
-                    </button>
-                    <button onClick={() => onAddBehavior(cat.id)} className="p-0.5 text-gray-300 hover:text-blue-500">
-                      <Plus size={12} />
-                    </button>
-                  </div>
+          return (
+            <div
+              key={beh.id}
+              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3 py-2.5 md:py-2 min-h-[56px] md:min-h-[40px]"
+            >
+              <button
+                type="button"
+                onClick={() => onRowOpen(beh.id, dateStr)}
+                className="flex-1 min-w-0 text-left"
+              >
+                <div className="text-[14px] md:text-[13px] font-bold text-gray-900 leading-snug">
+                  {beh.name}
                 </div>
-
-                {/* Empty category hint */}
-                {catBehaviors.length === 0 && (
-                  <button
-                    onClick={() => onAddBehavior(cat.id)}
-                    className="w-full px-4 py-3 text-xs text-gray-400 bg-white border-b border-gray-100 hover:text-blue-500 hover:bg-blue-50 text-left"
-                  >
-                    + Add a behavior to this category
-                  </button>
+                {(context || comment) && (
+                  <div className="text-[11px] text-gray-500 mt-0.5 truncate">
+                    {comment ? (
+                      <span className="text-steward-primary-dark font-medium">“{comment.comment}”</span>
+                    ) : context}
+                  </div>
                 )}
+              </button>
 
-                {/* Behavior items */}
-                {catBehaviors.map(beh => {
-                  const key = `${beh.id}_${dateStr}`
-                  const entry = entries.get(key)
-                  const comment = comments.get(key)
-                  const hasComment = !!comment
-                  const value = entry?.value ?? null
-                  const pct = complianceMap.get(beh.id)
-                  const pctRounded = pct != null ? Math.round(pct) : null
-                  const compLabel = COMPLIANCE_LABELS[frequency]
+              <button
+                type="button"
+                onClick={() => onRowOpen(beh.id, dateStr)}
+                className="text-gray-300 hover:text-gray-500 p-1.5 shrink-0"
+                aria-label="More options"
+              >
+                <MoreHorizontal size={16} />
+              </button>
 
-                  return (
-                    <div key={beh.id} className="flex items-center gap-3 px-4 py-3 md:py-3.5 border-b border-gray-100 bg-white">
-                      {/* Status button */}
-                      <button
-                        onClick={() => onToggle(beh.id, dateStr, value)}
-                        className={`shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center font-bold text-sm transition ${
-                          value === 'y' ? 'bg-green-500 text-white' :
-                          value === 'n' ? 'bg-red-500 text-white' :
-                          value === 'na' ? 'bg-gray-300 text-white' :
-                          'bg-gray-100 border-2 border-gray-200 text-gray-300'
-                        }`}
-                      >
-                        {value === 'y' && <Check size={18} />}
-                        {value === 'n' && <X size={18} />}
-                        {value === 'na' && <Minus size={18} />}
-                      </button>
-
-                      {/* Task name + compliance */}
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm md:text-base leading-snug ${value === 'y' ? 'text-gray-400 line-through' : value === 'na' ? 'text-gray-400' : 'text-gray-800'}`}>
-                          {beh.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {pctRounded != null && (
-                            <span className={`text-[10px] font-medium ${pctRounded >= 80 ? 'text-green-600' : pctRounded >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
-                              {pctRounded}% {compLabel}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Comment button — filled when has comment */}
-                      <button
-                        onClick={() => onComment(beh.id, dateStr)}
-                        className={`p-1.5 shrink-0 ${hasComment ? 'text-blue-500' : 'text-gray-300 hover:text-blue-400'}`}
-                      >
-                        {hasComment ? (
-                          <MessageSquare size={16} fill="currentColor" />
-                        ) : (
-                          <MessageSquare size={16} />
-                        )}
-                      </button>
-
-                      {/* Calendar button */}
-                      <div className="relative shrink-0">
-                        <button
-                          onClick={() => setCalendarMenuId(calendarMenuId === beh.id ? null : beh.id)}
-                          className="p-1.5 text-gray-300 hover:text-blue-500"
-                        >
-                          <CalendarPlus size={15} />
-                        </button>
-                        {calendarMenuId === beh.id && (
-                          <CalendarMenu
-                            title={beh.name}
-                            date={periodDate}
-                            frequency={frequency}
-                            onClose={() => setCalendarMenuId(null)}
-                          />
-                        )}
-                      </div>
-
-                      {/* Info button — only if info_text exists */}
-                      {beh.info_text && (
-                        <button
-                          onClick={() => setInfoModal({ name: beh.name, text: beh.info_text! })}
-                          className="p-1.5 text-gray-300 hover:text-blue-500 shrink-0"
-                        >
-                          <Info size={15} />
-                        </button>
-                      )}
-
-                      {/* Edit button */}
-                      <button
-                        onClick={() => onEditBehavior(beh.id)}
-                        className="p-1.5 text-gray-300 hover:text-gray-500 shrink-0"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {infoModal && (
-        <InfoModal
-          title={infoModal.name}
-          infoText={infoModal.text}
-          onClose={() => setInfoModal(null)}
-        />
-      )}
-    </div>
+              <button
+                type="button"
+                onClick={() => onToggle(beh.id, dateStr, value)}
+                className="shrink-0 active:scale-95 transition-transform md:hidden"
+                aria-label={`Mark ${beh.name} done`}
+              >
+                <CheckCircle value={value} size={44} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggle(beh.id, dateStr, value)}
+                className="shrink-0 active:scale-95 transition-transform hidden md:inline-flex"
+                aria-label={`Mark ${beh.name} done`}
+              >
+                <CheckCircle value={value} size={28} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
 export { cycleValue }
+
+/**
+ * Add-on (Family/Personal) habits disclosure — opens collapsed. Same row
+ * styling as the main list, just behind a click. Lives at the bottom of the
+ * page below the three frequency sections.
+ */
+export function AddOnHabits({
+  behaviors, entries, complianceMap,
+  periodDates,
+  onToggle, onRowOpen,
+}: {
+  behaviors: { weekly: Behavior[]; monthly: Behavior[]; quarterly: Behavior[] }
+  entries: Map<string, Entry>
+  complianceMap: Map<string, number | null>
+  periodDates: { weekly: Date; monthly: Date; quarterly: Date }
+  onToggle: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
+  onRowOpen: (behaviorId: string, date: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const total =
+    behaviors.weekly.length + behaviors.monthly.length + behaviors.quarterly.length
+  if (total === 0) return null
+
+  function Row({ beh, freq, date }: { beh: Behavior; freq: Frequency; date: Date }) {
+    const dStr = formatDate(date)
+    const key = `${beh.id}_${dStr}`
+    const entry = entries.get(key)
+    const value = entry?.value ?? null
+    const pct = complianceMap.get(beh.id) ?? null
+    const context = streakOrContext(beh, entries, pct, freq, date)
+    return (
+      <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3 py-2 min-h-[48px]">
+        <button
+          type="button"
+          onClick={() => onRowOpen(beh.id, dStr)}
+          className="flex-1 min-w-0 text-left"
+        >
+          <div className="text-[13px] font-semibold text-gray-800 leading-snug">{beh.name}</div>
+          {context && <div className="text-[10px] text-gray-500 mt-0.5">{context}</div>}
+        </button>
+        <button
+          type="button"
+          onClick={() => onToggle(beh.id, dStr, value)}
+          className="shrink-0 active:scale-95 transition-transform"
+          aria-label={`Mark ${beh.name} done`}
+        >
+          <CheckCircle value={value} size={36} />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <section className="mt-6">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-3 py-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700"
+        aria-expanded={open}
+      >
+        <span>Add-on habits</span>
+        <span className="text-xs text-gray-500">{total} {open ? '· hide' : '· show'}</span>
+      </button>
+
+      {open && (
+        <div className="mt-3 space-y-3">
+          {behaviors.weekly.length > 0 && (
+            <div>
+              <div className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 px-1">This week</div>
+              <div className="space-y-1.5">
+                {behaviors.weekly.map(b => <Row key={b.id} beh={b} freq="weekly" date={periodDates.weekly} />)}
+              </div>
+            </div>
+          )}
+          {behaviors.monthly.length > 0 && (
+            <div>
+              <div className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 px-1">This month</div>
+              <div className="space-y-1.5">
+                {behaviors.monthly.map(b => <Row key={b.id} beh={b} freq="monthly" date={periodDates.monthly} />)}
+              </div>
+            </div>
+          )}
+          {behaviors.quarterly.length > 0 && (
+            <div>
+              <div className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 px-1">This quarter</div>
+              <div className="space-y-1.5">
+                {behaviors.quarterly.map(b => <Row key={b.id} beh={b} freq="quarterly" date={periodDates.quarterly} />)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}

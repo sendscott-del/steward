@@ -44,11 +44,23 @@ export const translations = {
     'menu.language': 'Language',
     'menu.languageEnglish': 'English',
     'menu.languageSpanish': 'Español',
+    'menu.interviews': 'Quarterly Interviews',
+    'menu.demoMode': 'Demo mode',
+    'menu.gatherAccess': 'Gather — user access',
 
     // Bottom tabs
     'tab.work': 'Work',
     'tab.reflect': 'Reflect',
     'tab.notes': 'Notes',
+
+    // More tab + sheet
+    'nav.more': 'More',
+    'more.stewardship': 'Stewardship',
+    'more.workspace': 'Workspace',
+    'more.help': 'Help',
+    'more.suggest': 'Suggest an enhancement',
+    'more.opensInNewTab': 'Opens in new tab',
+    'more.overdue': 'overdue',
 
     // Common
     'common.save': 'Save',
@@ -112,11 +124,23 @@ export const translations = {
     'menu.language': 'Idioma',
     'menu.languageEnglish': 'English',
     'menu.languageSpanish': 'Español',
+    'menu.interviews': 'Entrevistas Trimestrales',
+    'menu.demoMode': 'Modo demostración',
+    'menu.gatherAccess': 'Gather — acceso de usuarios',
 
     // Bottom tabs
     'tab.work': 'Trabajo',
     'tab.reflect': 'Reflexionar',
     'tab.notes': 'Notas',
+
+    // More tab + sheet
+    'nav.more': 'Más',
+    'more.stewardship': 'Mayordomía',
+    'more.workspace': 'Espacio de trabajo',
+    'more.help': 'Ayuda',
+    'more.suggest': 'Sugerir una mejora',
+    'more.opensInNewTab': 'Se abre en una pestaña nueva',
+    'more.overdue': 'atrasadas',
 
     // Common
     'common.save': 'Guardar',

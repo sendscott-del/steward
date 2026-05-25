@@ -1,13 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import {
+  ClipboardList, StickyNote, BookOpen, Users, Settings, Sparkles, LogOut,
+} from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
-import { ClipboardList, StickyNote, BookOpen, Menu, X, Users } from 'lucide-react'
+import { useInterviewsOverdue } from '@/lib/hooks/useInterviews'
 import AppSwitcher from './AppSwitcher'
 import { StewardLogo } from './icons/StewardLogo'
-import { DemoModeToggle } from './DemoModeBanner'
+import MobileTabBar from './MobileTabBar'
+import MoreSheet from './MoreSheet'
 import SuggestionFAB from './SuggestionFAB'
 
 export type TabId = 'work' | 'reflect' | 'notes'
@@ -21,8 +25,12 @@ interface AppShellProps {
 export default function AppShell({ children, activeTab, onTabChange }: AppShellProps) {
   const { user, loading, isAdmin, canManageInterviews, signOut } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const { t, lang, setLang } = useLanguage()
-  const [showMenu, setShowMenu] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [suggestOpen, setSuggestOpen] = useState(false)
+
+  const overdueCount = useInterviewsOverdue(canManageInterviews)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,24 +48,29 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
 
   if (!user) return null
 
+  const onInterviewsRoute = pathname?.startsWith('/interviews') ?? false
+
   return (
-    <div className="min-h-screen flex flex-col pb-16">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <AppSwitcher />
-      {/* Header. The 3px steward-primary stripe at the bottom is the
-          per-app brand cue — it picks up the same blue used in the
-          Gathered switcher's "S" chip so the brand identity follows
-          you into the app instead of stopping at the chip. */}
-      <header className="sticky top-0 z-30 bg-white border-b-[3px] border-steward-primary px-4 py-2.5 flex items-center justify-between gap-3">
+
+      {/* Scripture top bar — shared chrome at every size. The 3px steward-primary
+          stripe at the bottom is the per-app brand cue that follows you into
+          the app from the Gathered switcher chip. Sticky on mobile (where the
+          body scrolls), static on desktop (sidebar is the stable anchor). */}
+      <header className="sticky md:static top-0 z-30 bg-white border-b-[3px] border-steward-primary px-4 py-2.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <StewardLogo size={32} />
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-gray-900 leading-tight">{t('app.name')}</h1>
-            <p className="text-[10px] italic text-gray-400 leading-tight truncate">&ldquo;{t('app.tagline')}&rdquo; <span className="not-italic">{t('app.taglineRef')}</span></p>
+            <p className="text-[10px] italic text-gray-400 leading-tight truncate">
+              &ldquo;{t('app.tagline')}&rdquo;{' '}
+              <span className="not-italic">{t('app.taglineRef')}</span>
+            </p>
           </div>
         </div>
-        {/* EN/ES toggle lives in the top bar across the suite — moved out of
-            the hamburger menu so a one-tap language switch is always one
-            tap away. Mirrors Tidings and the rest of the Gathered apps. */}
+        {/* EN/ES toggle stays in the scripture top bar across the suite — one-tap
+            language switch is always one tap away, never behind a menu. */}
         <div className="flex items-center gap-1 text-[11px] font-semibold tracking-wide select-none">
           <button
             type="button"
@@ -79,114 +92,170 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
             ES
           </button>
         </div>
-        <div className="relative">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1 text-gray-500 hover:text-gray-700"
-            aria-label={showMenu ? t('common.close') : t('menu.language')}
-          >
-            {showMenu ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          {showMenu && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-56">
-                {canManageInterviews && (
-                  <>
-                    <button
-                      onClick={() => { router.push('/interviews'); setShowMenu(false) }}
-                      className="w-full px-4 py-2 text-left text-sm text-steward-primary font-medium hover:bg-blue-50 flex items-center gap-2"
-                    >
-                      <Users size={14} /> Quarterly Interviews
-                    </button>
-                    <div className="border-t border-gray-100 my-1" />
-                  </>
-                )}
-                {isAdmin && (
-                  <>
-                    <button
-                      onClick={() => { router.push('/admin'); setShowMenu(false) }}
-                      className="w-full px-4 py-2 text-left text-sm text-blue-600 font-medium hover:bg-blue-50"
-                    >
-                      {t('menu.admin')}
-                    </button>
-                    <a
-                      href="https://gathered-admin-neon.vercel.app/gather"
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => setShowMenu(false)}
-                      className="block w-full px-4 py-2 text-left text-sm text-blue-600 font-medium hover:bg-blue-50"
-                    >
-                      Gather — User access ↗
-                    </a>
-                    <div className="border-t border-gray-100 my-1" />
-                  </>
-                )}
-                <div onClick={() => setShowMenu(false)}>
-                  <DemoModeToggle />
-                </div>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  onClick={() => { router.push('/guide'); setShowMenu(false) }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  {t('menu.userGuide')}
-                </button>
-                <button
-                  onClick={() => { router.push('/release-notes'); setShowMenu(false) }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  {t('menu.releaseNotes')}
-                </button>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  onClick={() => { signOut(); setShowMenu(false) }}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
-                >
-                  {t('menu.signOut')}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <div className="flex-1 md:flex">
+        {/* Desktop sidebar (md+) — replaces the kebab menu. */}
+        <DesktopSidebar
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          isAdmin={isAdmin}
+          canManageInterviews={canManageInterviews}
+          overdueCount={overdueCount}
+          onInterviewsRoute={onInterviewsRoute}
+          onSignOut={() => void signOut()}
+        />
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex">
-        <button
-          onClick={() => onTabChange('work')}
-          className={`flex-1 flex flex-col items-center py-2 text-xs ${
-            activeTab === 'work' ? 'text-steward-primary' : 'text-gray-400'
-          }`}
-        >
-          <ClipboardList size={20} />
-          <span className="mt-0.5">{t('tab.work')}</span>
-        </button>
-        <button
-          onClick={() => onTabChange('reflect')}
-          className={`flex-1 flex flex-col items-center py-2 text-xs ${
-            activeTab === 'reflect' ? 'text-steward-primary' : 'text-gray-400'
-          }`}
-        >
-          <BookOpen size={20} />
-          <span className="mt-0.5">{t('tab.reflect')}</span>
-        </button>
-        <button
-          onClick={() => onTabChange('notes')}
-          className={`flex-1 flex flex-col items-center py-2 text-xs ${
-            activeTab === 'notes' ? 'text-steward-primary' : 'text-gray-400'
-          }`}
-        >
-          <StickyNote size={20} />
-          <span className="mt-0.5">{t('tab.notes')}</span>
-        </button>
-      </nav>
-      <SuggestionFAB />
+        <main className="flex-1 min-w-0 safe-pb-tabbar md:pb-6">
+          {children}
+        </main>
+      </div>
+
+      {/* Mobile-only chrome */}
+      <MobileTabBar
+        activeTab={activeTab}
+        onTabChange={(t) => { setMoreOpen(false); onTabChange(t) }}
+        onMoreClick={() => setMoreOpen(true)}
+        moreActive={moreOpen}
+      />
+      <MoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        onSuggestEnhancement={() => setSuggestOpen(true)}
+        isAdmin={isAdmin}
+        canManageInterviews={canManageInterviews}
+        overdueCount={overdueCount}
+        onSignOut={() => void signOut()}
+      />
+      <SuggestionFAB
+        controlledOpen={suggestOpen || undefined}
+        onControlledClose={() => setSuggestOpen(false)}
+      />
     </div>
+  )
+}
+
+interface DesktopSidebarProps {
+  activeTab: TabId
+  onTabChange: (tab: TabId) => void
+  isAdmin: boolean
+  canManageInterviews: boolean
+  overdueCount: number
+  onInterviewsRoute: boolean
+  onSignOut: () => void
+}
+
+function DesktopSidebar({
+  activeTab, onTabChange, isAdmin, canManageInterviews,
+  overdueCount, onInterviewsRoute, onSignOut,
+}: DesktopSidebarProps) {
+  const { t } = useLanguage()
+  const router = useRouter()
+
+  return (
+    <aside
+      className="hidden md:flex md:flex-col md:flex-shrink-0 md:sticky md:top-0 md:h-screen text-white"
+      style={{ width: 200, background: 'var(--color-steward-chrome)' }}
+      aria-label="Sidebar"
+    >
+      <div className="px-4 pt-5 pb-5 flex items-center gap-2.5">
+        <StewardLogo size={28} />
+        <div className="text-lg font-bold tracking-tight leading-none">Steward</div>
+      </div>
+
+      <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
+        <SideButton
+          icon={ClipboardList}
+          label={t('tab.work')}
+          active={activeTab === 'work' && !onInterviewsRoute}
+          onClick={() => { if (onInterviewsRoute) router.push('/'); onTabChange('work') }}
+        />
+        <SideButton
+          icon={BookOpen}
+          label={t('tab.reflect')}
+          active={activeTab === 'reflect' && !onInterviewsRoute}
+          onClick={() => { if (onInterviewsRoute) router.push('/'); onTabChange('reflect') }}
+        />
+        <SideButton
+          icon={StickyNote}
+          label={t('tab.notes')}
+          active={activeTab === 'notes' && !onInterviewsRoute}
+          onClick={() => { if (onInterviewsRoute) router.push('/'); onTabChange('notes') }}
+        />
+        {canManageInterviews && (
+          <SideButton
+            icon={Users}
+            label={t('menu.interviews')}
+            active={onInterviewsRoute}
+            badge={overdueCount > 0 ? overdueCount : undefined}
+            badgeVariant="danger"
+            onClick={() => router.push('/interviews')}
+          />
+        )}
+      </nav>
+
+      <div className="px-2 pb-4 mt-2 space-y-0.5 border-t border-white/10 pt-3">
+        {isAdmin && (
+          <SideButton
+            icon={Settings}
+            label={t('menu.admin')}
+            onClick={() => router.push('/admin')}
+          />
+        )}
+        <SideButton
+          icon={BookOpen}
+          label={t('menu.userGuide')}
+          onClick={() => router.push('/guide')}
+        />
+        <SideButton
+          icon={Sparkles}
+          label={t('menu.releaseNotes')}
+          onClick={() => router.push('/release-notes')}
+        />
+        <SideButton
+          icon={LogOut}
+          label={t('menu.signOut')}
+          onClick={onSignOut}
+        />
+      </div>
+    </aside>
+  )
+}
+
+interface SideButtonProps {
+  icon: React.ElementType
+  label: string
+  active?: boolean
+  badge?: number
+  badgeVariant?: 'danger' | 'default'
+  onClick: () => void
+}
+
+function SideButton({ icon: Icon, label, active, badge, badgeVariant = 'default', onClick }: SideButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center gap-2.5 text-[12px] font-semibold px-2.5 py-2 rounded-md text-left transition-colors ${
+        active
+          ? 'bg-white/15 text-white'
+          : 'text-white/70 hover:bg-white/5 hover:text-white'
+      }`}
+      aria-current={active ? 'page' : undefined}
+    >
+      <Icon size={14} className="shrink-0" />
+      <span className="flex-1 truncate">{label}</span>
+      {badge != null && (
+        <span
+          className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full ${
+            badgeVariant === 'danger'
+              ? 'bg-red-500 text-white'
+              : 'bg-white/20 text-white'
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
   )
 }

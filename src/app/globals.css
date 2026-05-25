@@ -15,3 +15,45 @@ body {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* --- Suite-wide mobile fixes (Phase 6) --------------------- */
+
+/* 16-px form fonts on mobile — prevents iOS Safari auto-zoom on focus */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px; }
+}
+
+/* Safe-area utilities for iPhone home indicator */
+.safe-bottom {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+.safe-pb-tabbar {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) {
+  .safe-pb-tabbar { padding-bottom: 0; }
+}
+
+/* 44-px buttons — Steward variant: blue primary, navy chrome secondary */
+.k-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--color-steward-primary);
+  color: white;
+  border: 0;
+  transition: opacity 0.15s;
+}
+.k-btn-chrome { background: var(--color-steward-chrome); color: white; }
+.k-btn:active { opacity: 0.85; }
+.k-btn:disabled { opacity: 0.5; pointer-events: none; }
+.k-btn-outline {
+  background: white;
+  color: var(--color-gray-700);
+  border: 1.5px solid var(--color-gray-200);
+}

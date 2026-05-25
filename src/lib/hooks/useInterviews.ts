@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Interview, StakeRole } from '@/lib/types'
 
@@ -144,4 +144,40 @@ export function currentQuarter(date: Date = new Date()): { year: number; quarter
     year: date.getFullYear(),
     quarter_num: (Math.floor(date.getMonth() / 3) + 1) as 1 | 2 | 3 | 4,
   }
+}
+
+/**
+ * Returns the count of interviews that are still overdue for the current year:
+ * any interview from a past quarter (within this year) that has not been
+ * completed. Used by AppShell to badge the More sheet / DesktopSidebar.
+ *
+ * Lightweight — only fetches the current year, only the columns needed.
+ * Gated on `enabled` so we don't query for users who can't manage interviews.
+ */
+export function useInterviewsOverdue(enabled: boolean): number {
+  const [interviews, setInterviews] = useState<Pick<Interview, 'year' | 'quarter_num' | 'completed_at'>[]>([])
+
+  useEffect(() => {
+    if (!enabled) {
+      setInterviews([])
+      return
+    }
+    const year = new Date().getFullYear()
+    let cancelled = false
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('steward_interviews')
+        .select('year, quarter_num, completed_at')
+        .eq('year', year)
+      if (cancelled || error) return
+      setInterviews((data ?? []) as Pick<Interview, 'year' | 'quarter_num' | 'completed_at'>[])
+    })()
+    return () => { cancelled = true }
+  }, [enabled])
+
+  return useMemo(() => {
+    if (!enabled) return 0
+    const { quarter_num: currentQ } = currentQuarter()
+    return interviews.filter(iv => !iv.completed_at && iv.quarter_num < currentQ).length
+  }, [interviews, enabled])
 }
