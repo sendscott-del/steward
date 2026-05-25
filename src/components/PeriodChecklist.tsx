@@ -32,10 +32,46 @@ function cycleValue(current: EntryValue | null): EntryValue | null {
 }
 
 /**
+ * True when the period is approaching its window and the behavior hasn't been
+ * marked yet — drives the amber "Due this week" cue. Weekly behaviors are
+ * always "due" the current week so we don't surface a separate amber state
+ * for them; monthly + quarterly behaviors get an amber border when the period
+ * is the current one (offset 0) and the calendar is in the last week of the
+ * month / last 2 weeks of the quarter.
+ */
+function isDueSoon(
+  behavior: Behavior,
+  entries: Map<string, Entry>,
+  frequency: Frequency,
+  periodDate: Date,
+): boolean {
+  const key = `${behavior.id}_${formatDate(periodDate)}`
+  const value = entries.get(key)?.value
+  if (value) return false
+  if (frequency === 'weekly') return false
+
+  const now = new Date()
+  if (frequency === 'monthly') {
+    // Same month as periodDate, and we're in the final 7 days.
+    if (now.getFullYear() !== periodDate.getFullYear() || now.getMonth() !== periodDate.getMonth()) {
+      return false
+    }
+    const monthEnd = new Date(periodDate.getFullYear(), periodDate.getMonth() + 1, 0)
+    return (monthEnd.getTime() - now.getTime()) / 86400000 <= 7
+  }
+  // quarterly: periodDate is the quarter start; quarter end is +3 months minus a day
+  const qStart = new Date(periodDate.getFullYear(), periodDate.getMonth(), 1)
+  const qEnd = new Date(periodDate.getFullYear(), periodDate.getMonth() + 3, 0)
+  if (now < qStart || now > qEnd) return false
+  return (qEnd.getTime() - now.getTime()) / 86400000 <= 14
+}
+
+/**
  * Compute a short streak / context line for a behavior.
- * Examples: "7-week streak", "Skipped last week", "12% L12W", "Due this week".
- * The point is a single, motivating phrase a leader can read in <0.5s — not
- * a precise stat. Falls back to compliance % when nothing else fires.
+ * Examples: "7-week streak", "Skipped last week", "Due this week",
+ * "12% L12W". The point is a single, motivating phrase a leader can read in
+ * <0.5s — not a precise stat. Falls back to compliance % when nothing else
+ * fires.
  */
 function streakOrContext(
   behavior: Behavior,
@@ -77,6 +113,12 @@ function streakOrContext(
     if (!lastEntry?.value && currentEntry?.value !== 'y') return `Skipped last ${noun}`
   }
 
+  // Due-this-period cue — wins over the compliance % so leaders see the cue
+  // before a number. Matches the amber CheckCircle visual.
+  if (isDueSoon(behavior, entries, frequency, periodDate)) {
+    return `Due this ${noun}`
+  }
+
   if (compliancePct != null) {
     const rounded = Math.round(compliancePct)
     const label = frequency === 'weekly' ? 'L12W' : frequency === 'monthly' ? 'L12M' : 'L4Q'
@@ -86,7 +128,19 @@ function streakOrContext(
   return null
 }
 
-function CheckCircle({ value, size = 44 }: { value: EntryValue | null; size?: number }) {
+function CheckCircle({
+  value,
+  size = 44,
+  dueSoon,
+}: {
+  value: EntryValue | null
+  size?: number
+  /** When true and the period is unmarked, the circle renders with a warning
+   *  amber border — the "due this week" cue from PeriodChecklist §6. Only
+   *  applies to the empty state; values y/n/na win because they reflect an
+   *  explicit user action. */
+  dueSoon?: boolean
+}) {
   const px = size
   const iconSize = Math.round(size * 0.45)
   if (value === 'y') {
@@ -117,6 +171,14 @@ function CheckCircle({ value, size = 44 }: { value: EntryValue | null; size?: nu
       >
         <Minus size={iconSize} strokeWidth={2.8} />
       </span>
+    )
+  }
+  if (dueSoon) {
+    return (
+      <span
+        className="rounded-full bg-white text-amber-500 border-[1.5px] border-amber-500 inline-flex items-center justify-center shrink-0"
+        style={{ width: px, height: px }}
+      />
     )
   }
   return (
@@ -215,6 +277,7 @@ export default function PeriodChecklist({
           const value = entry?.value ?? null
           const pct = complianceMap.get(beh.id) ?? null
           const context = streakOrContext(beh, entries, pct, frequency, periodDate)
+          const dueSoon = isDueSoon(beh, entries, frequency, periodDate)
 
           return (
             <div
@@ -253,7 +316,7 @@ export default function PeriodChecklist({
                 className="shrink-0 active:scale-95 transition-transform md:hidden"
                 aria-label={`Mark ${beh.name} done`}
               >
-                <CheckCircle value={value} size={44} />
+                <CheckCircle value={value} size={44} dueSoon={dueSoon} />
               </button>
               <button
                 type="button"
@@ -261,7 +324,7 @@ export default function PeriodChecklist({
                 className="shrink-0 active:scale-95 transition-transform hidden md:inline-flex"
                 aria-label={`Mark ${beh.name} done`}
               >
-                <CheckCircle value={value} size={28} />
+                <CheckCircle value={value} size={28} dueSoon={dueSoon} />
               </button>
             </div>
           )
@@ -302,6 +365,7 @@ export function AddOnHabits({
     const value = entry?.value ?? null
     const pct = complianceMap.get(beh.id) ?? null
     const context = streakOrContext(beh, entries, pct, freq, date)
+    const dueSoon = isDueSoon(beh, entries, freq, date)
     return (
       <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3 py-2 min-h-[48px]">
         <button
@@ -318,7 +382,7 @@ export function AddOnHabits({
           className="shrink-0 active:scale-95 transition-transform"
           aria-label={`Mark ${beh.name} done`}
         >
-          <CheckCircle value={value} size={36} />
+          <CheckCircle value={value} size={36} dueSoon={dueSoon} />
         </button>
       </div>
     )

@@ -155,7 +155,7 @@ function DesktopSidebar({
   return (
     <aside
       className="hidden md:flex md:flex-col md:flex-shrink-0 md:sticky md:top-0 md:h-screen text-white"
-      style={{ width: 200, background: 'var(--color-steward-chrome)' }}
+      style={{ width: 180, background: 'var(--color-steward-chrome)' }}
       aria-label="Sidebar"
     >
       <div className="px-4 pt-5 pb-5 flex items-center gap-2.5">

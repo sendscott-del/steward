@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.29.0'
+export const APP_VERSION = '2.29.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.29.1',
+    date: '2026-05-25',
+    enhancements: [
+      "Sidebar drops from 200px to 180px — matches the spec mockup and the rest of the suite's sidebar width pixel-for-pixel. Open Magnify / Knit / Glean / Tidings / Steward side by side and the sidebars line up.",
+      "Frequency-section grid (Weekly / Monthly / Quarterly columns) now flips to three-column at md+ (768px) instead of waiting until lg+ (1024px). Same breakpoint as the desktop sidebar, so the layout transitions from one-column to three-column at the same width the chrome flips.",
+      "PeriodChecklist gains the 'Due this week' amber-outlined CheckCircle state. Monthly behaviors in the last 7 days of the month and quarterly behaviors in the last 14 days of the quarter render with an amber border instead of the neutral empty state. streakOrContext also emits 'Due this {month/quarter}' as the meta-line text so leaders see the cue even before noticing the color.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.29.0',
     date: '2026-05-24',

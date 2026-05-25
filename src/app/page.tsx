@@ -251,10 +251,11 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Three frequency sections. On lg+ they sit side-by-side; on
-                  mobile they stack. The bottom-spaced layout matches the
-                  spec's "calling-first, frequency-grouped" recipe. */}
-              <div className="lg:grid lg:grid-cols-3 lg:gap-4 lg:items-start">
+              {/* Three frequency sections. On md+ they sit side-by-side; on
+                  mobile they stack. md: matches the desktop sidebar breakpoint
+                  so the layout flips from one-column to three-column at the
+                  same width the chrome flips. */}
+              <div className="md:grid md:grid-cols-3 md:gap-4 md:items-start">
                 <PeriodChecklist
                   title="This Week"
                   periodDate={weekDate}
