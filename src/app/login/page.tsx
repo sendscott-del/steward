@@ -23,7 +23,7 @@ export default function LoginPage() {
     setLoading(true)
 
     if (isSignUp) {
-      const { data, error: signUpErr } = await supabase.auth.signUp({ email, password })
+      const { data, error: signUpErr } = await supabase.auth.signUp({ email, password, options: { data: { app: 'steward' } } })
       if (signUpErr) {
         if (signUpErr.message.toLowerCase().includes('already') || signUpErr.message.toLowerCase().includes('exists')) {
           const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })

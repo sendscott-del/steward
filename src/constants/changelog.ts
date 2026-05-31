@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.29.1'
+export const APP_VERSION = '2.30.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.30.0',
+    date: '2026-05-31',
+    enhancements: [
+      "Signup now passes `data: { app: 'steward' }` to supabase.auth.signUp(). Companion to the shared handle_new_user trigger rewrite on 2026-05-30: the trigger only writes to per-app user tables that match the tag, and Steward's own onboarding (steward_user_profiles row) still happens through Gathered admin's gather_grant_app_access path. Prevents Steward signups from leaving a stale pending row in Magnify's `profiles` or Squarecana's `sq_users`.",
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.29.1',
     date: '2026-05-25',
