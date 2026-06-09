@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Steward</string>
+    <string name="title_activity_main">Steward</string>
+    <string name="package_name">app.gatheredin.steward</string>
+    <string name="custom_url_scheme">app.gatheredin.steward</string>
+</resources>
