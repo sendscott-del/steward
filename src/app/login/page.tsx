@@ -160,6 +160,11 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
+
+        {/* Legal disclaimer */}
+        <p className="max-w-sm mx-auto text-center text-xs text-gray-400 mt-6 px-2">
+          Not an official product of, and is not endorsed by, The Church of Jesus Christ of Latter-day Saints.
+        </p>
       </div>
     </div>
   )

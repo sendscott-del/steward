@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.31.0'
+export const APP_VERSION = '2.32.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.32.0',
+    date: '2026-06-09',
+    enhancements: [
+      'Added the required disclaimer that Steward is not an official product of, and is not endorsed by, The Church of Jesus Christ of Latter-day Saints, to the sign-in screen.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.31.0',
     date: '2026-06-08',
