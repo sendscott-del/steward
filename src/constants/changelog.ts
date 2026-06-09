@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.30.0'
+export const APP_VERSION = '2.31.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.31.0',
+    date: '2026-06-08',
+    enhancements: [
+      'Domain migration: Steward now lives at https://steward.gatheredin.app — the new Gathered suite domain. The old stewards-indeed.vercel.app URL keeps working and 301-redirects here (root and every path), so existing links and shortcuts are not broken. The App Switcher now points at the *.gatheredin.app addresses for all five Gathered apps.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.30.0',
     date: '2026-05-31',
