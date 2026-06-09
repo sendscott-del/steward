@@ -1,6 +1,15 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { supabase } from './supabase'
+
+// App Store / Play review accounts ALWAYS render demo (fake) data — never real
+// member data. The flag is OR'd into demoMode so every existing demo branch in
+// the data hooks applies. Keep in sync with the approved reviewer account.
+export const REVIEW_DEMO_EMAILS = ['applereview@gatheredin.app']
+export function isReviewDemoUser(email?: string | null): boolean {
+  return !!email && REVIEW_DEMO_EMAILS.includes(email.toLowerCase())
+}
 
 export type StewardDemoRole =
   | 'stake_president'
@@ -38,12 +47,25 @@ const KEY_ROLE = 'steward.demoRole'
 export function DemoModeProvider({ children }: { children: React.ReactNode }) {
   const [demoMode, setDemoModeState] = useState(false)
   const [demoRole, setDemoRoleState] = useState<StewardDemoRole>('stake_president')
+  const [reviewerForced, setReviewerForced] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     setDemoModeState(window.localStorage.getItem(KEY_MODE) === 'on')
     const r = window.localStorage.getItem(KEY_ROLE) as StewardDemoRole | null
     if (r && r in DEMO_ROLE_LABELS) setDemoRoleState(r)
+  }, [])
+
+  // Force demo on for App Review reviewer accounts — they never see real data.
+  useEffect(() => {
+    let active = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && isReviewDemoUser(data.session?.user?.email)) setReviewerForced(true)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (isReviewDemoUser(session?.user?.email)) setReviewerForced(true)
+    })
+    return () => { active = false; sub.subscription.unsubscribe() }
   }, [])
 
   const setDemoMode = useCallback((on: boolean) => {
@@ -61,7 +83,7 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <Ctx.Provider value={{ demoMode, demoRole, setDemoMode, setDemoRole }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ demoMode: demoMode || reviewerForced, demoRole, setDemoMode, setDemoRole }}>{children}</Ctx.Provider>
   )
 }
 

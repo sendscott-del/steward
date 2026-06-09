@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { Plus, Save, Settings } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useStewardData } from '@/lib/hooks/useStewardData'
+import { useDemoMode } from '@/lib/demoMode'
 import { getWeekStart } from '@/lib/dates'
 import { addWeeks, addMonths, format } from 'date-fns'
 import AppShell from '@/components/AppShell'
@@ -45,6 +46,9 @@ export default function HomePage() {
     needsTemplate, signOut, refreshStatus,
     selectedTemplateName, stakeRole,
   } = useAuth()
+  // Demo mode (incl. App Review reviewer accounts) bypasses the access gates and
+  // renders fixture data only — so a reviewer never needs real Steward access.
+  const { demoMode } = useDemoMode()
   const [activeTab, setActiveTab] = useState<TabId>('work')
   const [showCallingPicker, setShowCallingPicker] = useState(false)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
@@ -166,7 +170,7 @@ export default function HomePage() {
   }, [selectedTemplateName, stakeRole])
 
   // New user — needs to pick a calling and wait for approval
-  if (!isAdmin && userStatus === 'new' && user) {
+  if (!isAdmin && userStatus === 'new' && user && !demoMode) {
     return (
       <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
         <NewUserSetup
@@ -180,12 +184,12 @@ export default function HomePage() {
 
   // Pending approval (legacy self-signup flow — Gather-granted users skip this
   // because the trigger sets status='approved' directly)
-  if (!isAdmin && userStatus === 'pending') {
+  if (!isAdmin && userStatus === 'pending' && !demoMode) {
     return <PendingApproval onRefresh={refreshStatus} onSignOut={signOut} />
   }
 
   // Approved via Gather but no calling picked yet — self-serve picker
-  if (needsTemplate && user) {
+  if (needsTemplate && user && !demoMode) {
     return (
       <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
         <PickCalling
@@ -199,7 +203,7 @@ export default function HomePage() {
   }
 
   // Rejected
-  if (!isAdmin && userStatus === 'rejected') {
+  if (!isAdmin && userStatus === 'rejected' && !demoMode) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
         <div className="text-center max-w-sm">
