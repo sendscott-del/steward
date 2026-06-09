@@ -9,7 +9,7 @@ import { useEffect } from 'react'
 // bookmarks and the previous in-app menu entry both still land somewhere
 // useful. The menu link in AppShell now points to the canonical URL
 // directly, so a click from inside Steward skips this hop.
-const CANONICAL_URL = 'https://gathered-admin-neon.vercel.app/gather'
+const CANONICAL_URL = 'https://gather.gatheredin.app/gather'
 
 export default function GatherRedirectPage() {
   useEffect(() => {

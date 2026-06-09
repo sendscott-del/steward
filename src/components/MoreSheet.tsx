@@ -82,7 +82,7 @@ export default function MoreSheet({
               meta={t('more.opensInNewTab')}
               onClick={() => {
                 onClose()
-                window.open('https://gathered-admin-neon.vercel.app/gather', '_blank', 'noopener,noreferrer')
+                window.open('https://gather.gatheredin.app/gather', '_blank', 'noopener,noreferrer')
               }}
             />
           )}

@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 // Suite-role management moved into the standalone Gather app. This redirect
 // preserves old bookmarks; the nav link in AppShell points straight there.
-const CANONICAL_URL = "https://gathered-admin-neon.vercel.app/gather";
+const CANONICAL_URL = "https://gather.gatheredin.app/gather";
 
 export default function StewardRolesRedirectPage() {
   useEffect(() => {
