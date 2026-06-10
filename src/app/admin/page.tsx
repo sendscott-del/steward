@@ -987,6 +987,17 @@ function PeopleView({ users, templates, search, setSearch, filter, setFilter, on
 
   return (
     <div className="p-4 px-5 grid gap-3.5 max-w-[1240px] mx-auto w-full">
+      {/* Access is read-only here — approvals/denials/revocations live in Gather. */}
+      <div className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-50 border border-blue-200 rounded-md text-[12.5px] text-blue-800">
+        <ExternalLink size={13} className="shrink-0" />
+        <span>
+          User access is managed in{' '}
+          <a href="https://gather.gatheredin.app/gather" target="_blank" rel="noreferrer" className="font-semibold underline">
+            Gather
+          </a>
+          . This page only assigns callings to already-approved users.
+        </span>
+      </div>
       {/* Toolbar */}
       <div className="flex gap-2.5 items-center flex-wrap">
         <div className="flex-1 min-w-[220px] relative">

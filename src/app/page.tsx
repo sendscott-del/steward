@@ -20,7 +20,6 @@ import EditBehaviorModal from '@/components/EditBehaviorModal'
 import EditCategoryModal from '@/components/EditCategoryModal'
 import CallingPicker from '@/components/CallingPicker'
 import SaveAsTemplateModal from '@/components/SaveAsTemplateModal'
-import NewUserSetup from '@/components/NewUserSetup'
 import PendingApproval from '@/components/PendingApproval'
 import PickCalling from '@/components/PickCalling'
 import type { Behavior, Category, EntryValue } from '@/lib/types'
@@ -169,22 +168,13 @@ export default function HomePage() {
     return null
   }, [selectedTemplateName, stakeRole])
 
-  // New user — needs to pick a calling and wait for approval
-  if (!isAdmin && userStatus === 'new' && user && !demoMode) {
-    return (
-      <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
-        <NewUserSetup
-          userId={user.id}
-          userEmail={user.email ?? ''}
-          onSubmitted={refreshStatus}
-        />
-      </AppShell>
-    )
-  }
-
-  // Pending approval (legacy self-signup flow — Gather-granted users skip this
-  // because the trigger sets status='approved' directly)
-  if (!isAdmin && userStatus === 'pending' && !demoMode) {
+  // Signed in but not yet approved. Both 'new' (no steward_user_profiles row
+  // yet) and 'pending' (legacy pre-Gather pending rows) land here. There is no
+  // self-serve request flow anymore — signup already queued a row in the shared
+  // gather_access_requests table via the handle_new_user trigger, and a stake
+  // leader approves it in Gather (gather_grant_app_access flips the profile to
+  // 'approved'). PendingApproval reads the Gather queue to surface denied state.
+  if (!isAdmin && (userStatus === 'new' || userStatus === 'pending') && !demoMode) {
     return <PendingApproval onRefresh={refreshStatus} onSignOut={signOut} />
   }
 

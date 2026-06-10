@@ -1,5 +1,12 @@
 'use client'
 
+// RETIRED (v2.33.0, 2026-06-10): this self-serve request flow wrote
+// steward_user_profiles with status='pending' but no approval UI existed
+// anywhere — a dead end. User access is now requested automatically at signup
+// (handle_new_user trigger -> gather_access_requests) and approved in Gather
+// (https://gather.gatheredin.app/gather). No route renders this component;
+// the file is kept for reference only.
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Template } from '@/lib/types'

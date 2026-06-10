@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.32.1'
+export const APP_VERSION = '2.33.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.33.0',
+    date: '2026-06-10',
+    enhancements: [
+      'User access is now managed in one place — the Gather hub. The old self-serve request flow (which had no approval screen) is retired; new sign-ups see their request status from the shared Gather queue.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.32.1',
     date: '2026-06-09',
