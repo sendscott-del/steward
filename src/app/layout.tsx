@@ -27,6 +27,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Let content extend into the iOS safe areas so the top suite bar's
+  // safe-area-inset-top padding actually reserves space behind the status bar.
+  viewportFit: 'cover',
   themeColor: '#2563EB',
 }
 
