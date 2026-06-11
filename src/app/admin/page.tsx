@@ -458,7 +458,7 @@ function Appbar({ onBack }: { onBack: () => void }) {
           <ChevronRight size={18} className="rotate-180" />
         </button>
         <div className="w-7 h-7 rounded-md flex items-center justify-center text-white font-extrabold text-[15px]"
-             style={{ background: `linear-gradient(135deg, #1E3A5F 0%, ${STEWARD_PRIMARY} 100%)` }}>S</div>
+             style={{ background: `linear-gradient(135deg, #1E3A8A 0%, ${STEWARD_PRIMARY} 100%)` }}>S</div>
         <div>
           <div className="font-bold text-[17px] text-gray-900 leading-tight">Steward</div>
           <div className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5">

@@ -25,11 +25,14 @@
    ============================================================ */
 
 @theme {
-  /* ---- Brand (suite) ---- */
-  --color-brand-primary:        #1B3A6B;
-  --color-brand-primary-light:  #2A5298;
-  --color-brand-primary-dark:   #0F2347;
-  --color-brand-primary-fade:   #E8EEF8;
+  /* ---- Brand (suite) ----
+     Steward re-skin: the suite navy chrome is replaced by a deep shade of
+     Steward's own blue, so the brand blue runs throughout (sidebar, hero,
+     selected states) — tonal pair with the brighter blue-600 action color. */
+  --color-brand-primary:        #1E3A8A;  /* deep blue chrome (was navy #1B3A6B) */
+  --color-brand-primary-light:  #2E4FA8;
+  --color-brand-primary-dark:   #14245C;  /* hero header bg */
+  --color-brand-primary-fade:   #DBEAFE;  /* selected-pill bg (blue-100) */
   --color-brand-accent:         #C9A84C;
   --color-brand-accent-light:   #FFF8E7;
 
@@ -38,7 +41,7 @@
   /* Steward: blue-600 for primary actions, navy chrome */
   --color-steward-primary:      #2563EB;
   --color-steward-primary-dark: #1D4ED8;
-  --color-steward-chrome:       #1E3A5F;
+  --color-steward-chrome:       #1E3A8A;  /* deep blue sidebar (was navy #1E3A5F) */
   /* Tidings: amber-500 for primary actions, slate-800 chrome */
   --color-tidings-primary:      #F59E0B;
   --color-tidings-primary-dark: #D97706;

@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.33.1'
+export const APP_VERSION = '2.34.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.34.0',
+    date: '2026-06-11',
+    enhancements: [
+      'Refreshed the look so Steward’s blue runs throughout the app — the sidebar, page headers, and selected states now carry the brand blue from the app icon instead of the old navy suite chrome.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.33.1',
     date: '2026-06-10',
