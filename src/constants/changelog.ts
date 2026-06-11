@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.34.0'
+export const APP_VERSION = '2.34.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.34.1',
+    date: '2026-06-11',
+    enhancements: [
+      'Widened the desktop sidebar to 224px and aligned its logo header so it matches the rest of the Gathered suite.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.34.0',
     date: '2026-06-11',

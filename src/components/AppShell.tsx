@@ -155,12 +155,12 @@ function DesktopSidebar({
   return (
     <aside
       className="hidden md:flex md:flex-col md:flex-shrink-0 md:sticky md:top-0 md:h-screen text-white"
-      style={{ width: 180, background: 'var(--color-steward-chrome)' }}
+      style={{ width: 224, background: 'var(--color-steward-chrome)' }}
       aria-label="Sidebar"
     >
-      <div className="px-4 pt-5 pb-5 flex items-center gap-2.5">
+      <div className="px-5 pt-6 pb-8 flex items-center gap-2.5">
         <StewardLogo size={28} />
-        <div className="text-lg font-bold tracking-tight leading-none">Steward</div>
+        <div className="text-xl font-bold tracking-tight leading-none">Steward</div>
       </div>
 
       <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
