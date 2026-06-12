@@ -18,6 +18,12 @@ export function useNotes(userId: string | undefined) {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => { isMountedRef.current = false }
+  }, [])
 
   useEffect(() => {
     if (demoMode) {
@@ -37,25 +43,32 @@ export function useNotes(userId: string | undefined) {
     if (!userId) return
 
     async function fetchNote() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('steward_notes')
         .select('*')
         .eq('user_id', userId)
         .limit(1)
-        .single()
+        .maybeSingle()
+
+      if (error) {
+        console.error('[notes] fetch failed:', error.message)
+        if (isMountedRef.current) setLoading(false)
+        return
+      }
 
       if (data) {
-        setNote(data)
+        if (isMountedRef.current) setNote(data)
       } else {
         // Create initial note
-        const { data: newNote } = await supabase
+        const { data: newNote, error: insErr } = await supabase
           .from('steward_notes')
           .insert({ user_id: userId, content: '' })
           .select()
           .single()
-        if (newNote) setNote(newNote)
+        if (insErr) console.error('[notes] create failed:', insErr.message)
+        if (newNote && isMountedRef.current) setNote(newNote)
       }
-      setLoading(false)
+      if (isMountedRef.current) setLoading(false)
     }
 
     fetchNote()
@@ -83,12 +96,14 @@ export function useNotes(userId: string | undefined) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
 
     timeoutRef.current = setTimeout(async () => {
+      if (!isMountedRef.current) return
       setSaving(true)
-      await supabase
+      const { error } = await supabase
         .from('steward_notes')
         .update({ content, updated_at: new Date().toISOString() })
         .eq('id', note.id)
-      setSaving(false)
+      if (error) console.error('[notes] save failed:', error.message)
+      if (isMountedRef.current) setSaving(false)
     }, 2000)
   }, [note, demoMode])
 

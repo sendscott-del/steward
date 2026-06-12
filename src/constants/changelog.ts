@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.34.1'
+export const APP_VERSION = '2.34.2'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.34.2',
+    date: '2026-06-12',
+    enhancements: [
+      'Calling setup is faster and more reliable: template categories now copy in parallel, and if anything fails you get a clear message instead of a half-built workspace.',
+    ],
+    bugFixes: [
+      'Security: interview access is now controlled only by admins and Gather roles — a member can no longer grant themselves access to confidential interview records by choosing a leadership calling.',
+      'Security: members can no longer mark their own account approved; approval stays with admins.',
+      'Notes no longer error if you navigate away mid-save, and failures are reported instead of silently dropped.',
+      'Reflection Log loads a bounded set of recent entries so it stays fast over time.',
+      'Fixed a demo-mode cell that rendered blank due to an invalid sample value.',
+    ],
+  },
   {
     version: '2.34.1',
     date: '2026-06-11',

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { applyTemplateToUser } from '@/lib/applyTemplate'
 import type { Template, TemplateCategory, TemplateBehavior, Frequency, StakeRole } from '@/lib/types'
 import { STAKE_ROLE_LABELS, stakeRoleFromTemplateName } from '@/lib/types'
 
@@ -179,13 +180,13 @@ function AdminInner({ currentUserId }: { currentUserId: string }) {
       .select('*')
       .single()
     if (error || !newTpl) { showToast(`Duplicate failed: ${error?.message}`); return }
-    for (const c of src.categories) {
+    await Promise.all(src.categories.map(async c => {
       const { data: newCat } = await supabase
         .from('steward_template_categories')
         .insert({ template_id: (newTpl as Template).id, name: c.name, sort_order: c.sort_order })
         .select('id')
         .single()
-      if (!newCat) continue
+      if (!newCat) return
       if (c.behaviors.length > 0) {
         await supabase.from('steward_template_behaviors').insert(c.behaviors.map(b => ({
           category_id: (newCat as { id: string }).id,
@@ -196,7 +197,7 @@ function AdminInner({ currentUserId }: { currentUserId: string }) {
           sort_order: b.sort_order,
         })))
       }
-    }
+    }))
     await refresh()
     setSelectedId((newTpl as Template).id)
     showToast('Template duplicated')
@@ -329,25 +330,15 @@ function AdminInner({ currentUserId }: { currentUserId: string }) {
   const assignTemplate = async (userId: string, template: FullTemplate) => {
     await supabase.from('steward_behaviors').delete().eq('user_id', userId)
     await supabase.from('steward_categories').delete().eq('user_id', userId)
-    for (const tCat of template.categories) {
-      const { data: newCat } = await supabase
-        .from('steward_categories')
-        .insert({ user_id: userId, name: tCat.name, sort_order: tCat.sort_order })
-        .select('id')
-        .single()
-      if (!newCat) continue
-      if (tCat.behaviors.length > 0) {
-        await supabase.from('steward_behaviors').insert(tCat.behaviors.map(b => ({
-          user_id: userId,
-          category_id: (newCat as { id: string }).id,
-          name: b.name,
-          frequency: b.frequency ?? 'weekly',
-          interval: b.interval ?? 1,
-          info_text: b.info_text || null,
-          sort_order: b.sort_order,
-        })))
-      }
-    }
+    const { error: applyErr } = await applyTemplateToUser(
+      userId,
+      template.categories.map(tCat => ({
+        name: tCat.name,
+        sort_order: tCat.sort_order,
+        behaviors: tCat.behaviors,
+      })),
+    )
+    if (applyErr) { showToast(`Assign failed: ${applyErr.message}`); return }
     await supabase.from('steward_user_profiles').update({
       selected_template_id: template.id,
       selected_template_name: template.name,

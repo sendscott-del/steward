@@ -5,7 +5,7 @@
 // steward_behaviors, steward_entries, steward_cell_comments) so the rest
 // of the app can render fixtures without any branching logic.
 
-import type { Category, Behavior, Entry, CellComment } from './types'
+import type { Category, Behavior, Entry, CellComment, EntryValue } from './types'
 import type { StewardDemoRole } from './demoMode'
 import { addWeeks, addMonths, format } from 'date-fns'
 import { formatDate, getWeekStart } from './dates'
@@ -177,7 +177,7 @@ const ROLE_TEMPLATES: Record<StewardDemoRole, { categoryName: string; behaviors:
   ],
 }
 
-const VALUES: Array<'y' | 'n' | 'k'> = ['y', 'y', 'y', 'k', 'n', 'y', 'y']
+const VALUES: Array<EntryValue> = ['y', 'y', 'y', 'na', 'n', 'y', 'y']
 
 export function buildDemoFixture(role: StewardDemoRole): DemoFixture {
   const template = ROLE_TEMPLATES[role]

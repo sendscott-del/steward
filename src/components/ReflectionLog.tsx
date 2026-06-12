@@ -54,7 +54,7 @@ export default function ReflectionLog({ userId }: ReflectionLogProps) {
         const [catRes, behRes, comRes] = await Promise.all([
           supabase.from('steward_categories').select('*').eq('user_id', userId).order('sort_order'),
           supabase.from('steward_behaviors').select('*').eq('user_id', userId).order('sort_order'),
-          supabase.from('steward_cell_comments').select('*').eq('user_id', userId).order('entry_date', { ascending: false }),
+          supabase.from('steward_cell_comments').select('*').eq('user_id', userId).order('entry_date', { ascending: false }).limit(500),
         ])
         categories = (catRes.data ?? []) as Category[]
         behaviors = (behRes.data ?? []) as Behavior[]

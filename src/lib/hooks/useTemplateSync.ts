@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { TemplateCategory, TemplateBehavior } from '@/lib/types'
+import { fetchTemplateSpec, applyTemplateToUser } from '@/lib/applyTemplate'
 
 export function useTemplateSync(userId: string | undefined) {
   const hasRun = useRef(false)
@@ -13,101 +13,62 @@ export function useTemplateSync(userId: string | undefined) {
 
     async function sync() {
       // 1. Get groups the user belongs to
-      const { data: memberships } = await supabase
+      const { data: memberships, error: memErr } = await supabase
         .from('steward_group_members')
         .select('group_id')
         .eq('user_id', userId)
 
+      if (memErr) { console.error('[templateSync] memberships failed:', memErr.message); return }
       if (!memberships || memberships.length === 0) return
       const groupIds = memberships.map(m => m.group_id)
 
       // 2. Get template assignments for those groups
-      const { data: assignments } = await supabase
+      const { data: assignments, error: asgErr } = await supabase
         .from('steward_template_assignments')
         .select('template_id')
         .in('group_id', groupIds)
 
+      if (asgErr) { console.error('[templateSync] assignments failed:', asgErr.message); return }
       if (!assignments || assignments.length === 0) return
       const templateIds = [...new Set(assignments.map(a => a.template_id))]
 
       // 3. Check which templates have already been applied
-      const { data: applied } = await supabase
+      const { data: applied, error: appErr } = await supabase
         .from('steward_template_applied')
         .select('template_id')
         .eq('user_id', userId)
 
+      if (appErr) { console.error('[templateSync] applied check failed:', appErr.message); return }
       const appliedIds = new Set((applied ?? []).map(a => a.template_id))
       const unapplied = templateIds.filter(id => !appliedIds.has(id))
 
       if (unapplied.length === 0) return
 
-      // 4. For each unapplied template, copy categories + behaviors
+      // 4. For each unapplied template, copy categories + behaviors (appended
+      //    after the user's existing categories). Only mark a template applied
+      //    if the copy actually succeeded — otherwise it retries next session
+      //    instead of leaving the user with a half-built workspace.
       for (const templateId of unapplied) {
-        const { data: templateCats } = await supabase
-          .from('steward_template_categories')
-          .select('*')
-          .eq('template_id', templateId)
-          .order('sort_order')
+        const { specs, error: specErr } = await fetchTemplateSpec(templateId)
+        if (specErr) { console.error('[templateSync] fetch failed:', specErr.message); continue }
 
-        if (!templateCats || templateCats.length === 0) {
-          // Mark as applied even if empty
-          await supabase.from('steward_template_applied').insert({
-            template_id: templateId,
-            user_id: userId,
-          })
+        if (specs.length === 0) {
+          await supabase.from('steward_template_applied').insert({ template_id: templateId, user_id: userId })
           continue
         }
 
-        // Get existing user categories to set sort_order
         const { data: existingCats } = await supabase
           .from('steward_categories')
           .select('sort_order')
           .eq('user_id', userId)
           .order('sort_order', { ascending: false })
           .limit(1)
+        const catOffset = existingCats && existingCats.length > 0 ? existingCats[0].sort_order + 1 : 0
 
-        let catOffset = (existingCats && existingCats.length > 0 ? existingCats[0].sort_order + 1 : 0)
+        const { error: applyErr } = await applyTemplateToUser(userId!, specs, catOffset)
+        if (applyErr) { console.error('[templateSync] apply failed:', applyErr.message); continue }
 
-        for (const tCat of templateCats as TemplateCategory[]) {
-          // Create user category
-          const { data: newCat } = await supabase
-            .from('steward_categories')
-            .insert({
-              user_id: userId,
-              name: tCat.name,
-              sort_order: catOffset++,
-            })
-            .select('id')
-            .single()
-
-          if (!newCat) continue
-
-          // Get behaviors for this template category
-          const { data: tBehaviors } = await supabase
-            .from('steward_template_behaviors')
-            .select('*')
-            .eq('category_id', tCat.id)
-            .order('sort_order')
-
-          if (tBehaviors && tBehaviors.length > 0) {
-            const behaviorInserts = (tBehaviors as TemplateBehavior[]).map((b, i) => ({
-              user_id: userId,
-              category_id: newCat.id,
-              name: b.name,
-              frequency: b.frequency ?? 'weekly',
-              interval: b.interval ?? 1,
-              info_text: b.info_text ?? null,
-              sort_order: i,
-            }))
-            await supabase.from('steward_behaviors').insert(behaviorInserts)
-          }
-        }
-
-        // Mark template as applied
-        await supabase.from('steward_template_applied').insert({
-          template_id: templateId,
-          user_id: userId,
-        })
+        await supabase.from('steward_template_applied').insert({ template_id: templateId, user_id: userId })
       }
     }
 

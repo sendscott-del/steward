@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { stakeRoleFromTemplateName } from '@/lib/types'
-import type { Template, TemplateCategory, TemplateBehavior, StakeRole } from '@/lib/types'
+import { fetchTemplateSpec, applyTemplateToUser } from '@/lib/applyTemplate'
+import type { Template, StakeRole } from '@/lib/types'
 
 interface PickCallingProps {
   userId: string
@@ -81,41 +82,17 @@ export default function PickCalling({ userId, userEmail, defaultName, onDone }: 
     await supabase.from('steward_behaviors').delete().eq('user_id', userId)
     await supabase.from('steward_categories').delete().eq('user_id', userId)
 
-    const { data: tCats } = await supabase
-      .from('steward_template_categories')
-      .select('*')
-      .eq('template_id', template.id)
-      .order('sort_order')
-
-    if (tCats) {
-      for (const tCat of tCats as TemplateCategory[]) {
-        const { data: newCat } = await supabase
-          .from('steward_categories')
-          .insert({ user_id: userId, name: tCat.name, sort_order: tCat.sort_order })
-          .select('id')
-          .single()
-        if (!newCat) continue
-
-        const { data: tBehs } = await supabase
-          .from('steward_template_behaviors')
-          .select('*')
-          .eq('category_id', tCat.id)
-          .order('sort_order')
-
-        if (tBehs && tBehs.length > 0) {
-          await supabase.from('steward_behaviors').insert(
-            (tBehs as TemplateBehavior[]).map(b => ({
-              user_id: userId,
-              category_id: newCat.id,
-              name: b.name,
-              frequency: b.frequency ?? 'weekly',
-              interval: b.interval ?? 1,
-              info_text: b.info_text || null,
-              sort_order: b.sort_order,
-            }))
-          )
-        }
-      }
+    const { specs, error: fetchErr } = await fetchTemplateSpec(template.id)
+    if (fetchErr) {
+      setSubmitting(false)
+      alert('Could not load that calling. Please try again.')
+      return
+    }
+    const { error: applyErr } = await applyTemplateToUser(userId, specs)
+    if (applyErr) {
+      setSubmitting(false)
+      alert('Something went wrong setting up your calling. Please try again.')
+      return
     }
 
     // Update the profile. Status stays 'approved' (set by the trigger).

@@ -54,6 +54,10 @@ export function getPeriodCells(
   frequency: Frequency, offset: number, count: number,
   interval: number = 1, anchorDate: string | null = null
 ): Date[] {
+  // Parse anchors as LOCAL midnight (not UTC) on purpose: anchor_date is a
+  // plain calendar date and every other date helper here (new Date(),
+  // getWeekStart, formatDate) operates in the device's local time. Using a 'Z'
+  // suffix would shift western-hemisphere users back a day. Keep it local.
   const anchor = anchorDate ? new Date(anchorDate + 'T00:00:00') : null
   if (frequency === 'weekly') return getWeeklyCells(offset, count, interval, anchor)
   if (frequency === 'monthly') return getMonthlyCells(offset, count, interval)
