@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.34.2'
+export const APP_VERSION = '2.34.3'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.34.3',
+    date: '2026-06-12',
+    enhancements: [
+      'Liken (gospel library & drafting) now appears in the Gathered app switcher.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.34.2',
     date: '2026-06-12',
