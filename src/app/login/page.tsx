@@ -6,6 +6,12 @@ import { supabase } from '@/lib/supabase'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { StewardLogo } from '@/components/icons/StewardLogo'
 
+// Shared demo account — sign-in triggers Steward's built-in Demo Mode
+// (isReviewDemoUser), which shows only fictional fixture data. Powers the
+// no-credentials demo button.
+const DEMO_EMAIL = 'applereview@gatheredin.app'
+const DEMO_PASSWORD = 'MagnifyReview!2026'
+
 export default function LoginPage() {
   const router = useRouter()
   const { t, lang, setLang } = useLanguage()
@@ -15,6 +21,20 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
+
+  async function tryDemo() {
+    setError('')
+    setMessage('')
+    setDemoLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+    if (error) {
+      setDemoLoading(false)
+      setError(t('auth.demoError'))
+    } else {
+      router.push('/')
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -129,6 +149,18 @@ export default function LoginPage() {
               </p>
             )}
           </form>
+
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={tryDemo}
+              disabled={demoLoading}
+              className="w-full py-2.5 rounded-md border border-steward-primary text-steward-primary text-sm font-medium hover:bg-steward-primary/5 disabled:opacity-50 min-h-[44px]"
+            >
+              {demoLoading ? t('auth.loading') : t('auth.tryDemo')}
+            </button>
+            <p className="text-center text-xs text-gray-500 mt-2">{t('auth.tryDemoSub')}</p>
+          </div>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}{' '}

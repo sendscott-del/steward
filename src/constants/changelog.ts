@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.35.0'
+export const APP_VERSION = '2.36.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.36.0',
+    date: '2026-06-15',
+    enhancements: [
+      'Added a "Try the demo" button to the sign-in screen — one tap opens a fully-functional sample workspace with fictional data only (no account, no real ward data). Built for app-store testers and to show the app to others.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.35.0',
     date: '2026-06-14',
