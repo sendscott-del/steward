@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.34.3'
+export const APP_VERSION = '2.35.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.35.0',
+    date: '2026-06-14',
+    enhancements: [
+      'The password-reset confirmation now shows the exact email address the link was sent to, so you can catch a mistyped address right away.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.34.3',
     date: '2026-06-12',

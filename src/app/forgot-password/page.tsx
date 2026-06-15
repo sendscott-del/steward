@@ -47,6 +47,8 @@ export default function ForgotPasswordPage() {
           {sent ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-700">{t('auth.resetSent')}</p>
+              <p className="text-sm font-semibold text-gray-900 break-all">{email}</p>
+              <p className="text-xs text-gray-500">{t('auth.resetSentHint')}</p>
               <Link
                 href="/login"
                 className="block w-full text-center py-2.5 bg-steward-primary text-white rounded-lg text-sm font-medium hover:bg-steward-primary-dark min-h-[44px] flex items-center justify-center"
