@@ -61,6 +61,9 @@ export function useAuth() {
         .eq('id', uid)
         .maybeSingle(),
     ]).then(([adminResult, profileResult]) => {
+      console.log('[useAuth] uid:', uid)
+      console.log('[useAuth] adminResult:', adminResult)
+      console.log('[useAuth] profileResult:', profileResult)
       const adminFound = !adminResult.error && (adminResult.data ?? []).length > 0
       setIsAdmin(adminFound)
       setAdminLoading(false)
