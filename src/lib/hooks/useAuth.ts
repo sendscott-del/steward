@@ -53,44 +53,37 @@ export function useAuth() {
     setAdminLoading(true)
     setStatusLoading(true)
 
-    // Check admin status
-    supabase
-      .from('steward_admins')
-      .select('user_id')
-      .eq('user_id', uid)
-      .then(({ data, error }) => {
-        const result = !error && (data ?? []).length > 0
-        setIsAdmin(result)
-        setAdminLoading(false)
-        // Admins are always approved
-        if (result) {
-          setUserStatus('approved')
-          setStatusLoading(false)
-          checkedUserId.current = uid
-        }
-      })
+    // Run both checks together so admin status wins over profile status
+    Promise.all([
+      supabase.from('steward_admins').select('user_id').eq('user_id', uid),
+      supabase.from('steward_user_profiles')
+        .select('status, stake_role, selected_template_id, selected_template_name')
+        .eq('id', uid)
+        .maybeSingle(),
+    ]).then(([adminResult, profileResult]) => {
+      const adminFound = !adminResult.error && (adminResult.data ?? []).length > 0
+      setIsAdmin(adminFound)
+      setAdminLoading(false)
 
-    // Check user profile status + stake role + template assignment
-    supabase
-      .from('steward_user_profiles')
-      .select('status, stake_role, selected_template_id, selected_template_name')
-      .eq('id', uid)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setUserStatus(data.status as UserStatus)
-          setStakeRole((data.stake_role as StakeRole | null) ?? null)
-          setSelectedTemplateId((data.selected_template_id as string | null) ?? null)
-          setSelectedTemplateName((data.selected_template_name as string | null) ?? null)
-        } else {
-          setUserStatus('new') // no profile yet — needs to pick a calling
-          setStakeRole(null)
-          setSelectedTemplateId(null)
-          setSelectedTemplateName(null)
-        }
-        setStatusLoading(false)
-        checkedUserId.current = uid
-      })
+      if (adminFound) {
+        // Admins are always approved regardless of profile status
+        setUserStatus('approved')
+      } else if (profileResult.data) {
+        const d = profileResult.data
+        setUserStatus(d.status as UserStatus)
+        setStakeRole((d.stake_role as StakeRole | null) ?? null)
+        setSelectedTemplateId((d.selected_template_id as string | null) ?? null)
+        setSelectedTemplateName((d.selected_template_name as string | null) ?? null)
+      } else {
+        setUserStatus('new')
+        setStakeRole(null)
+        setSelectedTemplateId(null)
+        setSelectedTemplateName(null)
+      }
+
+      setStatusLoading(false)
+      checkedUserId.current = uid
+    })
   }, [user?.id])
 
   const signOut = async () => {
