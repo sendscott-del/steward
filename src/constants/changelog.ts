@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.37.0',
+    date: '2026-07-06',
+    changes: [
+      'Added an Install page (/install.html) with one-tap, per-device instructions to add Steward to your home screen on iPhone, iPad, or Android — no app store needed. Share this link with people you invite.',
+    ],
+  },
+  {
     version: '2.36.0',
     date: '2026-06-15',
     enhancements: [
