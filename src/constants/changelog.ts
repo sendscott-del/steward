@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.36.0'
+export const APP_VERSION = '2.37.1'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.37.1',
+    date: '2026-07-19',
+    enhancements: [],
+    bugFixes: [
+      'On large desktop screens the main content no longer stretches edge-to-edge — it now sits in a comfortable centered column.',
+      'The orange Demo Mode banner no longer overflows on small phones — its controls wrap so the Exit button always stays on screen.',
+    ],
+  },
   {
     version: '2.37.0',
     date: '2026-07-06',

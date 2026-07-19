@@ -106,7 +106,10 @@ export default function AppShell({ children, activeTab, onTabChange }: AppShellP
           onSignOut={() => void signOut()}
         />
 
-        <main className="flex-1 min-w-0 safe-pb-tabbar md:pb-6">
+        {/* lg+ caps the content at a centered ~48rem column so wide monitors
+            don't stretch the checklists edge-to-edge. Below lg nothing changes:
+            main stays flex-1 full width. */}
+        <main className="flex-1 min-w-0 safe-pb-tabbar md:pb-6 lg:max-w-3xl lg:mx-auto">
           {children}
         </main>
       </div>

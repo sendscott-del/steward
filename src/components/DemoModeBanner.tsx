@@ -15,17 +15,17 @@ export default function DemoModeBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="w-full px-4 py-2 flex items-center justify-between gap-3 text-white text-xs"
+      className="w-full px-4 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-white text-xs"
       style={{ background: 'repeating-linear-gradient(45deg, #b45309, #b45309 12px, #92400e 12px, #92400e 24px)' }}
     >
       <span className="font-bold uppercase tracking-wider">Demo mode</span>
       <span className="hidden sm:inline opacity-80">No real ward data is shown. Use this to train new leaders.</span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         <label className="font-medium opacity-80">Viewing as</label>
         <select
           value={demoRole}
           onChange={e => setDemoRole(e.target.value as StewardDemoRole)}
-          className="bg-white/10 border border-white/40 rounded px-2 py-0.5 text-white"
+          className="bg-white/10 border border-white/40 rounded px-2 py-0.5 text-white min-w-0 max-w-full"
         >
           {Object.entries(DEMO_ROLE_LABELS).map(([k, label]) => (
             <option key={k} value={k} className="text-black">{label}</option>

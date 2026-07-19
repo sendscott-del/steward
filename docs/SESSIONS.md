@@ -2,6 +2,13 @@
 
 Append-only, newest first. Every working session adds one entry at the TOP: date, what changed, any infra facts touched (database, domain, auth, secrets). Infra changes also go into `CLAUDE.md` immediately, not just here.
 
+## 2026-07-19 — v2.37.1 responsive fixes (desktop max-width + demo banner wrap)
+
+- Capped the AppShell `<main>` content column at `lg:max-w-3xl lg:mx-auto` (~48rem, centered) so ≥1024px viewports no longer stretch content edge-to-edge; below 1024px rendering is untouched. Suite bar, scripture bar, sidebar, and tab bar remain full-bleed chrome.
+- Demo Mode banner (`DemoModeBanner.tsx`) now `flex-wrap`s (outer row + right control group, `min-w-0 max-w-full` on the select) so on 375px phones the Exit button no longer clips off-screen / causes horizontal page scroll.
+- Also reconciled versions: 2.37.0 changelog entry existed (install page, 07-06) but package.json/APP_VERSION were never bumped past 2.36.0 — both now 2.37.1 with a new changelog entry.
+- CSS/className-only changes; `npx tsc --noEmit` + `npm run build` clean. Pushed to main → Vercel. No infra changes.
+
 ## 2026-07-15 — Doc system initialized (history reconstructed from git)
 
 - 2026-03-30: born as "Leader Standard Work" v1.0.0; a single day of v1.x iteration built recurring schedules, reflection log, templates, admin panel, compliance grids — plus a long tail of admin-check race-condition fixes.
