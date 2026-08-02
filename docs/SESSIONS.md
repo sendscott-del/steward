@@ -2,6 +2,12 @@
 
 Append-only, newest first. Every working session adds one entry at the TOP: date, what changed, any infra facts touched (database, domain, auth, secrets). Infra changes also go into `CLAUDE.md` immediately, not just here.
 
+## 2026-08-02 — v2.37.2: safe-area spacer when the Gathered suite bar is hidden
+
+- Suite-wide follow-up to the status-bar overlap Scott reported in Magnify/Conduct: when AppSwitcher had nothing to show (single-app users), it rendered nothing and the next element sat under the iPhone status bar / Dynamic Island.
+- Fix: `src/components/AppSwitcher.tsx` — the empty case now returns a chrome-colored spacer padded by `env(safe-area-inset-top)` (zero-height where there is no inset). Same change shipped across Steward/Glean/Knit/Tidings/Conduct/Liken this session.
+- Pushed to main (`fce4086`); Vercel deploys.
+
 ## 2026-07-19 — v2.37.1 responsive fixes (desktop max-width + demo banner wrap)
 
 - Capped the AppShell `<main>` content column at `lg:max-w-3xl lg:mx-auto` (~48rem, centered) so ≥1024px viewports no longer stretch content edge-to-edge; below 1024px rendering is untouched. Suite bar, scripture bar, sidebar, and tab bar remain full-bleed chrome.
