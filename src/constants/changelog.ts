@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.37.1'
+export const APP_VERSION = '2.37.2'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.37.2',
+    date: '2026-08-02',
+    enhancements: [],
+    bugFixes: [
+      'On iPhones, if Steward is your only Gathered app (no suite bar shown at the top), the screen could slide up behind the status bar / Dynamic Island — the app now always reserves that space.',
+    ],
+  },
   {
     version: '2.37.1',
     date: '2026-07-19',
