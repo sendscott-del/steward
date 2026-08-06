@@ -27,3 +27,8 @@ Append-only, newest first. Every working session adds one entry at the TOP: date
 - 2026-06-27: fixed the pending-screen race condition — admin status check now wins over profile status; debug logging added then removed.
 - 2026-07-06: /install.html PWA install page + changelog-schema fix (last commits before doc init).
 - State at initialization: v2.36.0, 120 commits, live at steward.gatheredin.app on shared Supabase (steward_ prefix), clean working tree.
+
+## 2026-08-05 — exec-sec agent integration (external, no code change)
+
+- Scott's chief-of-staff repo (`~/claude-cos`) now has an exec-sec agent that reads/writes `steward_interviews` directly via the Supabase MCP (service role, bypasses RLS). Conventions documented in `~/claude-cos/.claude/commands/exec-sec.md` §5: upsert on (interviewee_name, year, quarter_num), `last_updated_by` = Scott's user id, notes = logistics only.
+- No Steward code or schema changed. Write path verified with a throwaway row (inserted + deleted same session). Table remains empty pending leadership roster seed.

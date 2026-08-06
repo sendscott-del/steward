@@ -37,3 +37,4 @@ Steward (formerly "Leader Standard Work") is a stewardship behavior-tracking app
 - Signup tags `app=steward` on the shared auth flow; shared-auth signup auto-signs-in emails that already exist from another suite app (2026-04-05) — keep that path intact.
 - App Review reviewer account auto-sees demo data only (2026-06-09); "Try the demo" (v2.36.0) is fixture-only. Don't loosen demo scoping.
 - README.md is still create-next-app boilerplate — this file is the real doc.
+- **External writer:** Scott's exec-sec agent (`~/claude-cos/.claude/commands/exec-sec.md`) upserts rows in `steward_interviews` via the Supabase MCP service role (since 2026-08-05). If you change that table's schema or constraints, update the agent's conventions too.
