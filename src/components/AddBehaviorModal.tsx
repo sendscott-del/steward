@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/dates'
+import { setBehaviorSharing } from '@/lib/hooks/useSharing'
+import ShareWithPicker from '@/components/ShareWithPicker'
 import type { Frequency } from '@/lib/types'
 
 interface AddBehaviorModalProps {
@@ -22,14 +24,17 @@ export default function AddBehaviorModal({
   const [frequency, setFrequency] = useState<Frequency>('weekly')
   const [interval, setInterval] = useState(1)
   const [anchorDate, setAnchorDate] = useState(formatDate(new Date()))
+  const [shareIds, setShareIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
     setLoading(true)
+    setError(null)
 
-    await supabase.from('steward_behaviors').insert({
+    const { data, error: insertErr } = await supabase.from('steward_behaviors').insert({
       user_id: userId,
       category_id: categoryId,
       name: name.trim(),
@@ -37,7 +42,23 @@ export default function AddBehaviorModal({
       interval,
       anchor_date: frequency === 'weekly' && interval > 1 ? anchorDate : null,
       sort_order: existingCount,
-    })
+    }).select('id').single()
+
+    if (insertErr || !data) {
+      setError(insertErr?.message ?? 'Could not add the behavior.')
+      setLoading(false)
+      return
+    }
+
+    if (shareIds.length > 0) {
+      const { error: shareErr } = await setBehaviorSharing(data.id as string, shareIds)
+      if (shareErr) {
+        setError(`Added the task, but sharing failed: ${shareErr}`)
+        setLoading(false)
+        onSuccess()
+        return
+      }
+    }
 
     setLoading(false)
     onSuccess()
@@ -124,6 +145,10 @@ export default function AddBehaviorModal({
               <p className="text-xs text-gray-400 mt-1">Pick any date in the first week this task applies</p>
             </div>
           )}
+
+          <ShareWithPicker selected={shareIds} onChange={setShareIds} disabled={loading} />
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
 
           <button
             type="submit"

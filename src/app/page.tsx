@@ -4,12 +4,15 @@ import { useState, useMemo, useCallback } from 'react'
 import { Plus, Save, Settings } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useStewardData } from '@/lib/hooks/useStewardData'
+import { useSharedTasks } from '@/lib/hooks/useSharing'
 import { useDemoMode } from '@/lib/demoMode'
 import { getWeekStart } from '@/lib/dates'
 import { addWeeks, addMonths, format } from 'date-fns'
 import AppShell from '@/components/AppShell'
 import type { TabId } from '@/components/AppShell'
-import PeriodChecklist, { cycleValue, AddOnHabits } from '@/components/PeriodChecklist'
+import PeriodChecklist, {
+  cycleValue, AddOnHabits, completedByLabel, sharedWithLabel,
+} from '@/components/PeriodChecklist'
 import ComplianceStrip from '@/components/ComplianceStrip'
 import NotesTab from '@/components/NotesTab'
 import ReflectionLog from '@/components/ReflectionLog'
@@ -57,6 +60,17 @@ export default function HomePage() {
     categories, behaviors, archivedBehaviors, entries, comments, complianceMap,
     loading, refresh, upsertEntry, upsertComment,
   } = useStewardData(user?.id)
+
+  // Shared tasks — who else a task counts for, and who marked it. Skipped in
+  // demo mode, which never touches the database.
+  const { sharedTasks, memberNames, refreshSharing } = useSharedTasks(user?.id, !demoMode)
+  const sharing = useMemo(
+    () => ({ currentUserId: user?.id, sharedTasks, memberNames }),
+    [user?.id, sharedTasks, memberNames],
+  )
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refresh(), refreshSharing()])
+  }, [refresh, refreshSharing])
 
   // Period navigation offsets
   const [weekOffset, setWeekOffset] = useState(0)
@@ -156,6 +170,23 @@ export default function HomePage() {
   const editBehavior = editBehaviorId ? allBehaviors.find(b => b.id === editBehaviorId) : null
   const editCategory = editCategoryId ? categories.find(c => c.id === editCategoryId) : null
   const addBehaviorCategory = addBehaviorCategoryId ? categories.find(c => c.id === addBehaviorCategoryId) : null
+
+  // Everyone the task being edited is currently shared with, minus this user —
+  // that's what the picker in the edit modal starts from.
+  const editBehaviorSharedWith = useMemo(() => {
+    if (!editBehavior?.shared_task_id) return []
+    return (sharedTasks.get(editBehavior.shared_task_id)?.members ?? [])
+      .filter(m => m.member_id !== user?.id)
+      .map(m => m.member_id)
+  }, [editBehavior, sharedTasks, user?.id])
+
+  // Shared-task context for the open cell sheet.
+  const cellBehavior = cellDetailModal
+    ? allBehaviors.find(b => b.id === cellDetailModal.behaviorId)
+    : null
+  const cellEntry = cellDetailModal
+    ? entries.get(`${cellDetailModal.behaviorId}_${cellDetailModal.date}`)
+    : undefined
 
   // Calling label for the YOUR CALLING header.
   const callingLabel = useMemo(() => {
@@ -260,6 +291,7 @@ export default function HomePage() {
                   entries={entries}
                   comments={comments}
                   complianceMap={complianceMap}
+                  sharing={sharing}
                   onToggle={handleToggle}
                   onRowOpen={handleRowOpen}
                   onPrev={() => setWeekOffset(o => o - 1)}
@@ -276,6 +308,7 @@ export default function HomePage() {
                   entries={entries}
                   comments={comments}
                   complianceMap={complianceMap}
+                  sharing={sharing}
                   onToggle={handleToggle}
                   onRowOpen={handleRowOpen}
                   onPrev={() => setMonthOffset(o => o - 1)}
@@ -292,6 +325,7 @@ export default function HomePage() {
                   entries={entries}
                   comments={comments}
                   complianceMap={complianceMap}
+                  sharing={sharing}
                   onToggle={handleToggle}
                   onRowOpen={handleRowOpen}
                   onPrev={() => setQuarterOffset(o => o - 1)}
@@ -320,6 +354,7 @@ export default function HomePage() {
                 }}
                 entries={entries}
                 complianceMap={complianceMap}
+                sharing={sharing}
                 periodDates={periodDates}
                 onToggle={handleToggle}
                 onRowOpen={handleRowOpen}
@@ -348,30 +383,62 @@ export default function HomePage() {
                 <div className="mt-6 space-y-4 max-w-2xl mx-auto">
                   {showManageBehaviors && (
                     <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
-                      {categories.map(cat => (
-                        <div key={cat.id} className="flex items-center gap-2 px-3 py-2.5">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold text-gray-800 truncate">{cat.name}</div>
-                            <div className="text-[10px] text-gray-500">
-                              {behaviors.filter(b => b.category_id === cat.id).length} behaviors
+                      {categories.map(cat => {
+                        const catBehaviors = behaviors.filter(b => b.category_id === cat.id)
+                        return (
+                          <div key={cat.id}>
+                            <div className="flex items-center gap-2 px-3 py-2.5">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-semibold text-gray-800 truncate">{cat.name}</div>
+                                <div className="text-[10px] text-gray-500">
+                                  {catBehaviors.length} behaviors
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setEditCategoryId(cat.id)}
+                                className="text-[11px] font-semibold text-gray-500 hover:text-gray-700 px-2 py-1"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAddBehaviorCategoryId(cat.id)}
+                                className="text-[11px] font-semibold text-steward-primary px-2 py-1 inline-flex items-center gap-1"
+                              >
+                                <Plus size={12} /> Add
+                              </button>
                             </div>
+
+                            {/* Behaviors in this category — Edit opens the
+                                behavior sheet, which is also where a task gets
+                                shared with other leaders. */}
+                            {catBehaviors.length > 0 && (
+                              <div className="pl-3 pr-1 pb-2 space-y-0.5">
+                                {catBehaviors.map(beh => (
+                                  <div key={beh.id} className="flex items-center gap-2 pl-2 border-l-2 border-gray-100">
+                                    <div className="flex-1 min-w-0 py-1">
+                                      <div className="text-[12px] text-gray-700 truncate">{beh.name}</div>
+                                      {beh.shared_task_id && (
+                                        <div className="text-[10px] text-steward-primary-dark font-semibold">
+                                          {sharedWithLabel(beh, sharing)}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditBehaviorId(beh.id)}
+                                      className="text-[11px] font-semibold text-gray-500 hover:text-gray-700 px-2 py-1"
+                                    >
+                                      Edit
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setEditCategoryId(cat.id)}
-                            className="text-[11px] font-semibold text-gray-500 hover:text-gray-700 px-2 py-1"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAddBehaviorCategoryId(cat.id)}
-                            className="text-[11px] font-semibold text-steward-primary px-2 py-1 inline-flex items-center gap-1"
-                          >
-                            <Plus size={12} /> Add
-                          </button>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -414,6 +481,8 @@ export default function HomePage() {
           date={cellDetailModal.date}
           currentValue={entries.get(`${cellDetailModal.behaviorId}_${cellDetailModal.date}`)?.value ?? null}
           currentComment={comments.get(`${cellDetailModal.behaviorId}_${cellDetailModal.date}`)?.comment ?? ''}
+          sharedWith={cellBehavior ? sharedWithLabel(cellBehavior, sharing) : null}
+          completedBy={cellBehavior ? completedByLabel(cellBehavior, cellEntry, sharing) : null}
           onSave={handleCellDetailSave}
           onClose={() => setCellDetailModal(null)}
         />
@@ -427,12 +496,17 @@ export default function HomePage() {
           categoryId={addBehaviorCategory.id}
           categoryName={addBehaviorCategory.name}
           existingCount={behaviors.filter(b => b.category_id === addBehaviorCategory.id).length}
-          onSuccess={refresh}
+          onSuccess={refreshAll}
           onClose={() => setAddBehaviorCategoryId(null)}
         />
       )}
       {editBehavior && (
-        <EditBehaviorModal behavior={editBehavior} onSuccess={refresh} onClose={() => setEditBehaviorId(null)} />
+        <EditBehaviorModal
+          behavior={editBehavior}
+          sharedWith={editBehaviorSharedWith}
+          onSuccess={refreshAll}
+          onClose={() => setEditBehaviorId(null)}
+        />
       )}
       {editCategory && (
         <EditCategoryModal category={editCategory} onSuccess={refresh} onClose={() => setEditCategoryId(null)} />

@@ -84,11 +84,33 @@ export default function GuidePage() {
         <Section title="Managing Categories &amp; Behaviors">
           <ul className="list-disc list-inside space-y-1">
             <li><strong>Edit a category</strong> — Tap the pencil icon next to the category name</li>
-            <li><strong>Edit a behavior</strong> — Tap the pencil icon on the behavior row</li>
+            <li><strong>Edit a behavior</strong> — Tap <strong>Manage</strong> at the top of the Work tab, then <strong>Edit</strong> next to the behavior</li>
             <li><strong>Archive a behavior</strong> — In the edit dialog, tap Archive. Data is preserved but hidden from the grid</li>
             <li><strong>Show archived</strong> — Each category has a toggle to reveal archived behaviors</li>
             <li><strong>Delete</strong> — Permanently removes the item and all associated data</li>
           </ul>
+        </Section>
+
+        <Section title="Shared tasks">
+          <p>
+            Some tasks belong to a group rather than to one person: the high
+            council interviews, for example, need to happen, but it does not
+            matter which member of the presidency does each one. A shared task
+            appears on every participant&apos;s list, and whoever marks it done
+            marks it done for all of them.
+          </p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li><strong>Share a task</strong> — Tap <strong>Manage</strong> on the Work tab, then <strong>Edit</strong> next to the behavior, and pick people under &quot;Shared with&quot;</li>
+            <li><strong>New tasks</strong> — The Add Behavior dialog has the same &quot;Shared with&quot; list, so a task can start out shared</li>
+            <li><strong>What the others get</strong> — The task drops into their list in a category with the same name, creating that category if they don&apos;t have one, and any history you already logged comes with it</li>
+            <li><strong>Who did it</strong> — A shared row shows a <strong>Shared</strong> tag, and once it&apos;s marked the row reads &quot;Done by [name]&quot;. The same detail appears when you open the row</li>
+            <li><strong>Undo</strong> — Unmarking a shared task clears it for everyone, the same way marking it sets it for everyone</li>
+            <li><strong>Stop sharing</strong> — Clear the &quot;Shared with&quot; list and save. Everyone keeps their own copy and their own history; it just stops travelling between accounts</li>
+          </ul>
+          <p className="mt-2 text-xs text-gray-500">
+            Comments on a cell stay private to the person who wrote them. Only
+            the done / not done status is shared.
+          </p>
         </Section>
 
         <Section title="Quarterly Interview Summary (Stake Presidency)">

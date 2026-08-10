@@ -69,6 +69,12 @@ export interface Behavior {
   is_archived: boolean
   sort_order: number
   info_text: string | null // handbook/scripture reference for info button
+  /**
+   * Set when this task is shared with other leaders. Every participant keeps
+   * their own behavior row; rows in the same group carry the same id. Marking
+   * the task done in any one account marks it done in all of them.
+   */
+  shared_task_id: string | null
 }
 
 export interface Entry {
@@ -76,6 +82,24 @@ export interface Entry {
   behavior_id: string
   entry_date: string // YYYY-MM-DD
   value: EntryValue
+  /** Who marked this period. Only set for shared tasks. */
+  completed_by: string | null
+}
+
+/** One participant in a shared task (from the steward_my_shared_tasks RPC). */
+export interface SharedTaskMember {
+  shared_task_id: string
+  member_id: string
+  member_name: string
+  is_owner: boolean
+}
+
+/** A person a task can be shared with (from the steward_shareable_users RPC). */
+export interface ShareableUser {
+  id: string
+  full_name: string | null
+  email: string | null
+  stake_role: StakeRole | null
 }
 
 export interface CellComment {

@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.37.2'
+export const APP_VERSION = '2.38.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.38.0',
+    date: '2026-08-09',
+    enhancements: [
+      'Shared tasks: a task can now be shared with other leaders, and whoever does it marks it done for everyone. Built for the high council interviews, where what matters is that the interview happens, not who does it.',
+      'Shared rows carry a "Shared" tag and show "Done by [name]" once someone marks the period, so the presidency can still see who did what.',
+      'Share a task from Manage on the Work tab (Edit next to a behavior) or when adding a new one. The task lands in each person\u2019s list in a category with the same name, and any history you already logged comes with it.',
+      'Stopping the sharing leaves everyone their own copy and their own history: it just stops travelling between accounts.',
+      'Behaviors can be edited again: Manage on the Work tab now lists the behaviors in each category with an Edit button.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.37.2',
     date: '2026-08-02',

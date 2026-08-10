@@ -140,6 +140,36 @@ export function useStewardData(userId: string | undefined): StewardData {
       return
     }
     if (!userId) return
+
+    // Shared task: one RPC fans the value out to every participant's row for
+    // this period and stamps who did it, so marking it done here marks it done
+    // in their grids too. Only this user's copy is updated locally — the others
+    // pick it up on their next load.
+    const sharedTaskId = behaviors.find(b => b.id === behaviorId)?.shared_task_id
+      ?? archivedBehaviors.find(b => b.id === behaviorId)?.shared_task_id
+      ?? null
+
+    if (sharedTaskId) {
+      setEntries(prev => {
+        const next = new Map(prev)
+        if (value === null) next.delete(key)
+        else next.set(key, {
+          id: key, behavior_id: behaviorId, entry_date: date, value, completed_by: userId,
+        } as unknown as Entry)
+        return next
+      })
+      const { error } = await supabase.rpc('steward_set_shared_entry', {
+        p_shared_task_id: sharedTaskId,
+        p_entry_date: date,
+        p_value: value,
+      })
+      if (error) {
+        console.warn('[sharing] steward_set_shared_entry:', error.message)
+        fetchData() // revert to server truth
+      }
+      return
+    }
+
     if (value === null) {
       setEntries(prev => { const next = new Map(prev); next.delete(key); return next })
       await supabase.from('steward_entries').delete().eq('behavior_id', behaviorId).eq('entry_date', date).eq('user_id', userId)
@@ -150,7 +180,7 @@ export function useStewardData(userId: string | undefined): StewardData {
         { onConflict: 'behavior_id,entry_date' }
       )
     }
-  }, [userId, demoMode])
+  }, [userId, demoMode, behaviors, archivedBehaviors, fetchData])
 
   const upsertComment = useCallback(async (behaviorId: string, date: string, comment: string) => {
     const key = entryKey(behaviorId, date)

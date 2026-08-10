@@ -4,27 +4,38 @@ import { useState } from 'react'
 import { X, Archive, RotateCcw, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/dates'
+import { setBehaviorSharing } from '@/lib/hooks/useSharing'
+import ShareWithPicker from '@/components/ShareWithPicker'
 import type { Behavior, Frequency } from '@/lib/types'
 
 interface EditBehaviorModalProps {
   behavior: Behavior
+  /** Everyone this task is currently shared with, excluding the signed-in leader. */
+  sharedWith?: string[]
   onSuccess: () => void
   onClose: () => void
 }
 
-export default function EditBehaviorModal({ behavior, onSuccess, onClose }: EditBehaviorModalProps) {
+export default function EditBehaviorModal({ behavior, sharedWith = [], onSuccess, onClose }: EditBehaviorModalProps) {
   const [name, setName] = useState(behavior.name)
   const [frequency, setFrequency] = useState<Frequency>(behavior.frequency ?? 'weekly')
   const [interval, setInterval] = useState(behavior.interval ?? 1)
   const [anchorDate, setAnchorDate] = useState(behavior.anchor_date ?? formatDate(new Date()))
   const [infoText, setInfoText] = useState(behavior.info_text ?? '')
+  const [shareIds, setShareIds] = useState<string[]>(sharedWith)
   const [loading, setLoading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const sharingChanged =
+    shareIds.length !== sharedWith.length ||
+    shareIds.some(id => !sharedWith.includes(id))
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
     setLoading(true)
+    setError(null)
     await supabase.from('steward_behaviors').update({
       name: name.trim(),
       frequency,
@@ -33,6 +44,19 @@ export default function EditBehaviorModal({ behavior, onSuccess, onClose }: Edit
       info_text: infoText.trim() || null,
       updated_at: new Date().toISOString(),
     }).eq('id', behavior.id)
+
+    // Sharing runs after the update so everyone's copy picks up the new name,
+    // frequency and notes.
+    if (sharingChanged || behavior.shared_task_id) {
+      const { error: shareErr } = await setBehaviorSharing(behavior.id, shareIds)
+      if (shareErr) {
+        setError(`Saved the task, but sharing failed: ${shareErr}`)
+        setLoading(false)
+        onSuccess()
+        return
+      }
+    }
+
     setLoading(false)
     onSuccess()
     onClose()
@@ -132,6 +156,10 @@ export default function EditBehaviorModal({ behavior, onSuccess, onClose }: Edit
             <p className="text-xs text-gray-400 mt-1">This shows when tapping the ℹ️ icon on the work tab.</p>
           </div>
 
+          <ShareWithPicker selected={shareIds} onChange={setShareIds} disabled={loading} />
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
           <button type="submit" disabled={loading || !name.trim()}
             className="w-full py-2.5 bg-steward-primary text-white rounded-lg text-sm font-medium hover:bg-steward-primary-dark disabled:opacity-50">
             {loading ? 'Saving...' : 'Save Changes'}
@@ -148,6 +176,13 @@ export default function EditBehaviorModal({ behavior, onSuccess, onClose }: Edit
             {confirmDelete ? 'Confirm Delete' : 'Delete'}
           </button>
         </div>
+
+        {behavior.shared_task_id && (
+          <p className="text-[11px] text-gray-500 mt-2">
+            This is a shared task. Archiving or deleting it here removes it from your list only —
+            the others keep theirs. To end the sharing for everyone, clear the list above and save.
+          </p>
+        )}
       </div>
     </div>
   )

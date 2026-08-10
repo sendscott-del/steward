@@ -9,7 +9,7 @@ Steward (formerly "Leader Standard Work") is a stewardship behavior-tracking app
 ## Infrastructure — VERIFY BEFORE ANY DB WRITE
 
 - **Supabase:** SHARED project `isogetmvnpimcmouakeg` (verified in `.env.local`). SHARED project — schema/auth changes affect Magnify/Glean/Knit/Liken/Conduct/Duty and more. Confirm the ref before every DB write. Also: the shared project's secret namespace is project-wide — grep other app dirs for `Deno.env.get('NAME')` before `supabase secrets set`.
-- **Table prefix:** `steward_` (e.g. `steward_behaviors`, `steward_categories`, `steward_templates`, `steward_entries`, `steward_interviews`, `steward_user_profiles`, `steward_admins`). Shared unprefixed tables it also touches: `user_apps`, `gather_access_requests`.
+- **Table prefix:** `steward_` (e.g. `steward_behaviors`, `steward_categories`, `steward_templates`, `steward_entries`, `steward_interviews`, `steward_shared_tasks`, `steward_user_profiles`, `steward_admins`). Shared unprefixed tables it also touches: `user_apps`, `gather_access_requests`.
 - **Auth:** shared Supabase Auth; Magnify owns the Site URL — Steward's URL lives in the Redirect URLs allow-list. Access control is deferred to the Gather hub (gather.gatheredin.app) since v2.27.0.
 - **Vercel / domain:** steward.gatheredin.app (old stewards-indeed.vercel.app). Deploys on push to main.
 - **GitHub:** https://github.com/sendscott-del/steward (origin, push to main).
@@ -22,6 +22,7 @@ Steward (formerly "Leader Standard Work") is a stewardship behavior-tracking app
 - Key dirs: `src/` (app code), `src/constants/changelog.ts`, `fastlane/`, plus **migrations as loose `supabase-migration-*.sql` files at the repo ROOT** (the `supabase/` dir exists but is empty of SQL) — keep new migrations consistent with wherever you standardize, and say so here if you move them.
 - Core model: behaviors grouped in categories, scheduled weekly/monthly/quarterly (incl. "every N weeks" with anchor date), compliance over the last 12 periods, N/A cell status, cell comments, templates by calling with template-apply, quarterly interviews synced bidirectionally with tracker entries.
 - Admin: `steward_admins` + first-run calling picker; user approval flows through Gather.
+- **Shared tasks (v2.38.0):** a behavior can be shared with other leaders. Every participant keeps their OWN `steward_behaviors` row (own category, own compliance); rows are linked by `steward_behaviors.shared_task_id` → `steward_shared_tasks`. Marking a period **fans out on write** to every participant's row, stamped in `steward_entries.completed_by`. Reads are unchanged (`.eq('user_id', …)`), which is why compliance/streaks/N-A all kept working. All cross-user writes go through SECURITY DEFINER RPCs — `steward_set_behavior_sharing`, `steward_set_shared_entry`, `steward_my_shared_tasks`, `steward_shareable_users` — because RLS on behaviors/categories/entries is strictly `auth.uid() = user_id`. Cell comments are NOT shared, only the y/n/na value.
 
 ## Rules for this repo
 
@@ -29,6 +30,16 @@ Steward (formerly "Leader Standard Work") is a stewardship behavior-tracking app
 - Deploy = push to GitHub main → Vercel builds. Scott tests on Vercel, not local — push after every change.
 - Session docs: append `docs/SESSIONS.md` every session; update this file the moment an infra fact changes.
 - No secrets in committed files. No member names in fixtures or docs.
+
+## Delivery surfaces (verify EVERY one per release — see global tech-stack.md rule)
+
+| Surface | How it updates | Timeline | Verify by |
+|---|---|---|---|
+| Web (steward.gatheredin.app) | Vercel on git push | ~2 min | load site |
+| Installed PWA | same Vercel deploy; SW refresh on next open | minutes | reload twice |
+| iOS/Android (Capacitor shells) | load the LIVE SITE via `server.url` | same Vercel deploy, next app open | open the store app after deploy |
+
+The native shells render the deployed website — **one Vercel deploy updates every surface.** A store re-submission is only needed when native shell code/plugins change. This is the OPPOSITE of Magnify (embedded Expo bundle + OTA publish, where store users can silently go stale) — never conflate the two models.
 
 ## Gotchas
 

@@ -2,10 +2,56 @@
 
 import { useState } from 'react'
 import {
-  ChevronLeft, ChevronRight, Check, X, Minus, MoreHorizontal,
+  ChevronLeft, ChevronRight, Check, X, Minus, MoreHorizontal, Users,
 } from 'lucide-react'
 import type { Behavior, Entry, CellComment, EntryValue, Frequency } from '@/lib/types'
 import { formatDate, isDueThisPeriod, getLast12Dates } from '@/lib/dates'
+import type { SharedTaskInfo } from '@/lib/hooks/useSharing'
+
+/** Shared-task context passed down from the page. */
+export interface SharingView {
+  currentUserId: string | undefined
+  sharedTasks: Map<string, SharedTaskInfo>
+  memberNames: Map<string, string>
+}
+
+/**
+ * "Done by Brother X" for a shared task, or null when the task isn't shared or
+ * nobody has marked this period. Shared tasks fan out on write, so the entry a
+ * leader sees may have been marked by one of the other participants.
+ */
+export function completedByLabel(
+  behavior: Behavior,
+  entry: Entry | undefined,
+  sharing: SharingView | undefined,
+): string | null {
+  if (!behavior.shared_task_id || !sharing) return null
+  if (!entry?.value || !entry.completed_by) return null
+  if (entry.completed_by === sharing.currentUserId) return 'Done by you'
+  const name = sharing.memberNames.get(entry.completed_by)
+  return name ? `Done by ${name}` : 'Done by another leader'
+}
+
+/** "Shared with A and B" for the info line in the cell detail sheet. */
+export function sharedWithLabel(
+  behavior: Behavior,
+  sharing: SharingView | undefined,
+): string | null {
+  if (!behavior.shared_task_id || !sharing) return null
+  const names = sharing.sharedTasks.get(behavior.shared_task_id)?.otherNames ?? []
+  if (names.length === 0) return 'Shared task'
+  if (names.length === 1) return `Shared with ${names[0]}`
+  return `Shared with ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+function SharedPill() {
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold uppercase tracking-wider text-steward-primary-dark bg-blue-50 border border-blue-100 rounded px-1 py-0.5 align-middle shrink-0">
+      <Users size={9} strokeWidth={2.8} />
+      Shared
+    </span>
+  )
+}
 
 interface PeriodChecklistProps {
   title: string
@@ -17,6 +63,7 @@ interface PeriodChecklistProps {
   entries: Map<string, Entry>
   comments: Map<string, CellComment>
   complianceMap: Map<string, number | null>
+  sharing?: SharingView
   onToggle: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
   onRowOpen: (behaviorId: string, date: string) => void
   onPrev: () => void
@@ -191,7 +238,7 @@ function CheckCircle({
 
 export default function PeriodChecklist({
   title, periodDate, periodLabel, periodOffset, frequency,
-  behaviors, entries, comments, complianceMap,
+  behaviors, entries, comments, complianceMap, sharing,
   onToggle, onRowOpen,
   onPrev, onNext, onToday,
 }: PeriodChecklistProps) {
@@ -278,6 +325,9 @@ export default function PeriodChecklist({
           const pct = complianceMap.get(beh.id) ?? null
           const context = streakOrContext(beh, entries, pct, frequency, periodDate)
           const dueSoon = isDueSoon(beh, entries, frequency, periodDate)
+          // Who marked a shared task wins the subtitle — it's the thing the
+          // other participants need to know at a glance.
+          const doneBy = completedByLabel(beh, entry, sharing)
 
           return (
             <div
@@ -289,12 +339,15 @@ export default function PeriodChecklist({
                 onClick={() => onRowOpen(beh.id, dateStr)}
                 className="flex-1 min-w-0 text-left"
               >
-                <div className="text-[14px] md:text-[13px] font-bold text-gray-900 leading-snug">
-                  {beh.name}
+                <div className="text-[14px] md:text-[13px] font-bold text-gray-900 leading-snug flex items-center gap-1.5">
+                  <span className="min-w-0 truncate">{beh.name}</span>
+                  {beh.shared_task_id && <SharedPill />}
                 </div>
-                {(context || comment) && (
+                {(doneBy || context || comment) && (
                   <div className="text-[11px] text-gray-500 mt-0.5 truncate">
-                    {comment ? (
+                    {doneBy ? (
+                      <span className="text-steward-primary-dark font-semibold">{doneBy}</span>
+                    ) : comment ? (
                       <span className="text-steward-primary-dark font-medium">“{comment.comment}”</span>
                     ) : context}
                   </div>
@@ -342,13 +395,14 @@ export { cycleValue }
  * page below the three frequency sections.
  */
 export function AddOnHabits({
-  behaviors, entries, complianceMap,
+  behaviors, entries, complianceMap, sharing,
   periodDates,
   onToggle, onRowOpen,
 }: {
   behaviors: { weekly: Behavior[]; monthly: Behavior[]; quarterly: Behavior[] }
   entries: Map<string, Entry>
   complianceMap: Map<string, number | null>
+  sharing?: SharingView
   periodDates: { weekly: Date; monthly: Date; quarterly: Date }
   onToggle: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
   onRowOpen: (behaviorId: string, date: string) => void
@@ -366,6 +420,7 @@ export function AddOnHabits({
     const pct = complianceMap.get(beh.id) ?? null
     const context = streakOrContext(beh, entries, pct, freq, date)
     const dueSoon = isDueSoon(beh, entries, freq, date)
+    const doneBy = completedByLabel(beh, entry, sharing)
     return (
       <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3 py-2 min-h-[48px]">
         <button
@@ -373,8 +428,17 @@ export function AddOnHabits({
           onClick={() => onRowOpen(beh.id, dStr)}
           className="flex-1 min-w-0 text-left"
         >
-          <div className="text-[13px] font-semibold text-gray-800 leading-snug">{beh.name}</div>
-          {context && <div className="text-[10px] text-gray-500 mt-0.5">{context}</div>}
+          <div className="text-[13px] font-semibold text-gray-800 leading-snug flex items-center gap-1.5">
+            <span className="min-w-0 truncate">{beh.name}</span>
+            {beh.shared_task_id && <SharedPill />}
+          </div>
+          {(doneBy || context) && (
+            <div className="text-[10px] text-gray-500 mt-0.5">
+              {doneBy ? (
+                <span className="text-steward-primary-dark font-semibold">{doneBy}</span>
+              ) : context}
+            </div>
+          )}
         </button>
         <button
           type="button"
