@@ -53,6 +53,25 @@ function SharedPill() {
   )
 }
 
+/**
+ * A row in a period section that is NOT a behavior — currently the quarterly
+ * interviews assigned to this leader, which live in steward_interviews and are
+ * shared across the presidency. Rendered in the same list so the leader has one
+ * place to check off the quarter.
+ */
+export interface VirtualRow {
+  id: string
+  name: string
+  /** Small grey line under the name (calling, ward, …). */
+  subtitle?: string | null
+  /** Overrides the subtitle once the row is done, e.g. "Done by Brother A". */
+  doneLabel?: string | null
+  done: boolean
+  onToggle: () => void
+  /** Optional tap target on the row text. */
+  onOpen?: () => void
+}
+
 interface PeriodChecklistProps {
   title: string
   periodDate: Date
@@ -64,6 +83,10 @@ interface PeriodChecklistProps {
   comments: Map<string, CellComment>
   complianceMap: Map<string, number | null>
   sharing?: SharingView
+  /** Non-behavior rows shown in this section (quarterly interviews). */
+  virtualRows?: VirtualRow[]
+  /** Label for the group of virtual rows, e.g. "Your interviews this quarter". */
+  virtualRowsLabel?: string
   onToggle: (behaviorId: string, date: string, currentValue: EntryValue | null) => void
   onRowOpen: (behaviorId: string, date: string) => void
   onPrev: () => void
@@ -239,6 +262,7 @@ function CheckCircle({
 export default function PeriodChecklist({
   title, periodDate, periodLabel, periodOffset, frequency,
   behaviors, entries, comments, complianceMap, sharing,
+  virtualRows = [], virtualRowsLabel,
   onToggle, onRowOpen,
   onPrev, onNext, onToday,
 }: PeriodChecklistProps) {
@@ -252,12 +276,13 @@ export default function PeriodChecklist({
     !b.is_archived && isDueThisPeriod(periodDate, frequency, b.interval ?? 1, b.anchor_date ?? null)
   )
 
-  // Count completion
-  const done = dueBehaviors.filter(b => {
-    const entry = entries.get(`${b.id}_${dateStr}`)
-    return entry?.value === 'y' || entry?.value === 'na'
-  }).length
-  const total = dueBehaviors.length
+  // Count completion — virtual rows (interviews) count the same as behaviors.
+  const done =
+    dueBehaviors.filter(b => {
+      const entry = entries.get(`${b.id}_${dateStr}`)
+      return entry?.value === 'y' || entry?.value === 'na'
+    }).length + virtualRows.filter(r => r.done).length
+  const total = dueBehaviors.length + virtualRows.length
 
   if (total === 0) return null
 
@@ -382,6 +407,61 @@ export default function PeriodChecklist({
             </div>
           )
         })}
+
+        {/* Interviews assigned to this leader for the period. Same table as the
+            Quarterly Interviews page, so checking one checks both. */}
+        {virtualRows.length > 0 && (
+          <>
+            {virtualRowsLabel && (
+              <div className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider pt-2 pb-0.5 px-1">
+                {virtualRowsLabel}
+              </div>
+            )}
+            {virtualRows.map(row => (
+              <div
+                key={row.id}
+                className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-lg px-3 py-2.5 md:py-2 min-h-[56px] md:min-h-[40px]"
+              >
+                <button
+                  type="button"
+                  onClick={row.onOpen}
+                  disabled={!row.onOpen}
+                  className="flex-1 min-w-0 text-left disabled:cursor-default"
+                >
+                  <div className="text-[14px] md:text-[13px] font-bold text-gray-900 leading-snug truncate">
+                    {row.name}
+                  </div>
+                  {(row.done && row.doneLabel) || row.subtitle ? (
+                    <div className="text-[11px] mt-0.5 truncate">
+                      {row.done && row.doneLabel ? (
+                        <span className="text-steward-primary-dark font-semibold">{row.doneLabel}</span>
+                      ) : (
+                        <span className="text-gray-500">{row.subtitle}</span>
+                      )}
+                    </div>
+                  ) : null}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={row.onToggle}
+                  className="shrink-0 active:scale-95 transition-transform md:hidden"
+                  aria-label={`Mark ${row.name} interviewed`}
+                >
+                  <CheckCircle value={row.done ? 'y' : null} size={44} />
+                </button>
+                <button
+                  type="button"
+                  onClick={row.onToggle}
+                  className="shrink-0 active:scale-95 transition-transform hidden md:inline-flex"
+                  aria-label={`Mark ${row.name} interviewed`}
+                >
+                  <CheckCircle value={row.done ? 'y' : null} size={28} />
+                </button>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </section>
   )

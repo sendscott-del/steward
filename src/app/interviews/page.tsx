@@ -7,23 +7,10 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, Plus, Pencil, Trash2, X } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 
-// When the user clicks a cell, prefer today's date if today falls in
-// that quarter (the common case). For past/future quarters, use the
-// quarter end date instead — clicking a Q1 cell on May 17 used to
-// stamp "May 17" under Q1, which was confusing because May 17 is Q2.
-function pickCompletionDate(year: number, quarterNum: 1 | 2 | 3 | 4, today: Date): string {
-  const todayYear = today.getFullYear()
-  const todayQuarter = Math.floor(today.getMonth() / 3) + 1
-  if (todayYear === year && todayQuarter === quarterNum) {
-    return format(today, 'yyyy-MM-dd')
-  }
-  // Last day of the clicked quarter: day 0 of the next month = last day of this month.
-  const quarterEndMonthIndex = quarterNum * 3 // 3, 6, 9, 12 (1-indexed month)
-  const quarterEnd = new Date(year, quarterEndMonthIndex, 0)
-  return format(quarterEnd, 'yyyy-MM-dd')
-}
 import { useAuth } from '@/lib/hooks/useAuth'
-import { useInterviews, currentQuarter, type PresidencyMember } from '@/lib/hooks/useInterviews'
+import {
+  useInterviews, currentQuarter, pickCompletionDate, type PresidencyMember,
+} from '@/lib/hooks/useInterviews'
 import { STAKE_ROLE_LABELS, type Interview } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 

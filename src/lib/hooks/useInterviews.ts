@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import type { Interview, StakeRole } from '@/lib/types'
 
@@ -28,12 +29,26 @@ interface UseInterviewsResult {
   deleteInterview: (id: string) => Promise<void>
 }
 
-export function useInterviews(year: number, currentUserId: string | undefined): UseInterviewsResult {
+/**
+ * @param enabled  set false to skip the queries entirely — the Work tab only
+ *                 loads interviews for leaders who can manage them.
+ */
+export function useInterviews(
+  year: number,
+  currentUserId: string | undefined,
+  enabled = true,
+): UseInterviewsResult {
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [members, setMembers] = useState<PresidencyMember[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchAll = useCallback(async () => {
+    if (!enabled) {
+      setInterviews([])
+      setMembers([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     const [interviewsRes, membersRes] = await Promise.all([
       supabase
@@ -41,23 +56,16 @@ export function useInterviews(year: number, currentUserId: string | undefined): 
         .select('*')
         .eq('year', year)
         .order('interviewee_name', { ascending: true }),
-      supabase
-        .from('steward_user_profiles')
-        .select('id, full_name, email, stake_role')
-        .eq('status', 'approved')
-        .in('stake_role', [
-          'stake_president',
-          'first_counselor',
-          'second_counselor',
-          'exec_secretary',
-          'stake_clerk',
-        ]),
+      // RPC, not a table read: steward_user_profiles is readable self-or-admin
+      // only, so a non-admin counselor used to get an empty roster and saw
+      // "Unknown" for every assignee.
+      supabase.rpc('steward_presidency_members'),
     ])
 
     if (!interviewsRes.error) setInterviews((interviewsRes.data ?? []) as Interview[])
     if (!membersRes.error) setMembers((membersRes.data ?? []) as PresidencyMember[])
     setLoading(false)
-  }, [year])
+  }, [year, enabled])
 
   useEffect(() => {
     fetchAll()
@@ -137,6 +145,22 @@ export function useInterviews(year: number, currentUserId: string | undefined): 
     toggleComplete,
     deleteInterview,
   }
+}
+
+/**
+ * The date to stamp when a quarter cell is checked. Prefers today when today
+ * actually falls in that quarter (the common case); otherwise uses the last day
+ * of the quarter, so clicking a Q1 cell in May doesn't stamp a May date under
+ * Q1. Shared by the Quarterly Interviews page and the Work tab.
+ */
+export function pickCompletionDate(year: number, quarterNum: 1 | 2 | 3 | 4, today: Date): string {
+  const todayYear = today.getFullYear()
+  const todayQuarter = Math.floor(today.getMonth() / 3) + 1
+  if (todayYear === year && todayQuarter === quarterNum) {
+    return format(today, 'yyyy-MM-dd')
+  }
+  const quarterEnd = new Date(year, quarterNum * 3, 0) // day 0 of next month = last day of this one
+  return format(quarterEnd, 'yyyy-MM-dd')
 }
 
 export function currentQuarter(date: Date = new Date()): { year: number; quarter_num: 1 | 2 | 3 | 4 } {

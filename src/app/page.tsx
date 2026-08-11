@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Save, Settings } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useStewardData } from '@/lib/hooks/useStewardData'
 import { useSharedTasks } from '@/lib/hooks/useSharing'
+import { useInterviews, pickCompletionDate } from '@/lib/hooks/useInterviews'
 import { useDemoMode } from '@/lib/demoMode'
 import { getWeekStart } from '@/lib/dates'
-import { addWeeks, addMonths, format } from 'date-fns'
+import { addWeeks, addMonths, format, parseISO } from 'date-fns'
 import AppShell from '@/components/AppShell'
 import type { TabId } from '@/components/AppShell'
 import PeriodChecklist, {
-  cycleValue, AddOnHabits, completedByLabel, sharedWithLabel,
+  cycleValue, AddOnHabits, completedByLabel, sharedWithLabel, type VirtualRow,
 } from '@/components/PeriodChecklist'
 import ComplianceStrip from '@/components/ComplianceStrip'
 import NotesTab from '@/components/NotesTab'
@@ -22,6 +24,7 @@ import AddBehaviorModal from '@/components/AddBehaviorModal'
 import EditBehaviorModal from '@/components/EditBehaviorModal'
 import EditCategoryModal from '@/components/EditCategoryModal'
 import CallingPicker from '@/components/CallingPicker'
+import { supabase } from '@/lib/supabase'
 import SaveAsTemplateModal from '@/components/SaveAsTemplateModal'
 import PendingApproval from '@/components/PendingApproval'
 import PickCalling from '@/components/PickCalling'
@@ -43,10 +46,11 @@ function isAddOnCategory(cat: Category): boolean {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const {
     user, isAdmin, userStatus,
     needsTemplate, signOut, refreshStatus,
-    selectedTemplateName, stakeRole,
+    selectedTemplateName, stakeRole, canManageInterviews,
   } = useAuth()
   // Demo mode (incl. App Review reviewer accounts) bypasses the access gates and
   // renders fixture data only — so a reviewer never needs real Steward access.
@@ -101,6 +105,49 @@ export default function HomePage() {
   const monthLabel = format(monthDate, 'MMMM yyyy')
   const quarterLabel = `Q${Math.floor(quarterDate.getMonth() / 3) + 1} ${format(quarterDate, 'yyyy')}`
 
+  // ── Quarterly interviews on the Work tab ──
+  // These rows are backed by steward_interviews, the same table the Quarterly
+  // Interviews page reads and writes. Checking one here checks it there, and a
+  // counselor checking it there shows up here. Only leaders who can manage
+  // interviews load them; demo mode never queries.
+  const interviewYear = quarterDate.getFullYear()
+  const displayedQuarter = (Math.floor(quarterDate.getMonth() / 3) + 1) as 1 | 2 | 3 | 4
+  const interviewsEnabled = !!canManageInterviews && !demoMode
+  const {
+    interviews, members: presidencyMembers, toggleComplete: toggleInterview,
+  } = useInterviews(interviewYear, user?.id, interviewsEnabled)
+
+  const myInterviewRows: VirtualRow[] = useMemo(() => {
+    if (!interviewsEnabled || !user) return []
+    return interviews
+      .filter(iv => iv.assigned_to_user_id === user.id && iv.quarter_num === displayedQuarter)
+      .sort((a, b) => a.interviewee_name.localeCompare(b.interviewee_name))
+      .map(iv => {
+        const done = !!iv.completed_at
+        const doneOn = iv.completed_at ? format(parseISO(iv.completed_at), 'MMM d') : null
+        const other = iv.last_updated_by && iv.last_updated_by !== user.id
+          ? presidencyMembers.find(m => m.id === iv.last_updated_by)
+          : null
+        const doneLabel = !done
+          ? null
+          : other
+            ? `Done by ${other.full_name || other.email}${doneOn ? ` · ${doneOn}` : ''}`
+            : doneOn ? `Done ${doneOn}` : 'Done'
+        return {
+          id: iv.id,
+          name: iv.interviewee_name,
+          subtitle: iv.interviewee_calling || 'Quarterly interview',
+          doneLabel,
+          done,
+          onToggle: () => toggleInterview(
+            iv,
+            done ? null : pickCompletionDate(iv.year, iv.quarter_num, now),
+          ),
+          onOpen: () => router.push('/interviews'),
+        }
+      })
+  }, [interviews, presidencyMembers, user, displayedQuarter, interviewsEnabled, toggleInterview, now, router])
+
   // Split categories into calling vs add-on. Behaviors inherit their category's
   // bucket. If the user has no add-on categories at all, every behavior is
   // treated as calling and the add-on disclosure stays hidden.
@@ -127,6 +174,30 @@ export default function HomePage() {
   const weeklyAddOn = useMemo(() => addOnBehaviors.filter(b => b.frequency === 'weekly'), [addOnBehaviors])
   const monthlyAddOn = useMemo(() => addOnBehaviors.filter(b => b.frequency === 'monthly'), [addOnBehaviors])
   const quarterlyAddOn = useMemo(() => addOnBehaviors.filter(b => b.frequency === 'quarterly'), [addOnBehaviors])
+
+  // The calling templates seed generic "Interview HC (…)" quarterly behaviors,
+  // which write to a different table than the interview list and so never
+  // matched it. Now that the real list renders in this same section, offer a
+  // one-tap archive instead of leaving two interview lists side by side.
+  const [dismissedPlaceholderNotice, setDismissedPlaceholderNotice] = useState(false)
+  const [archivingPlaceholders, setArchivingPlaceholders] = useState(false)
+  const placeholderInterviewBehaviors = useMemo(() => {
+    if (!interviewsEnabled || myInterviewRows.length === 0) return []
+    return behaviors.filter(
+      b => b.frequency === 'quarterly' && /^interview\b/i.test(b.name.trim()),
+    )
+  }, [behaviors, interviewsEnabled, myInterviewRows.length])
+
+  const archivePlaceholders = useCallback(async () => {
+    if (placeholderInterviewBehaviors.length === 0) return
+    setArchivingPlaceholders(true)
+    await supabase
+      .from('steward_behaviors')
+      .update({ is_archived: true, updated_at: new Date().toISOString() })
+      .in('id', placeholderInterviewBehaviors.map(b => b.id))
+    setArchivingPlaceholders(false)
+    refresh()
+  }, [placeholderInterviewBehaviors, refresh])
 
   // Modal state
   const [cellDetailModal, setCellDetailModal] = useState<{
@@ -276,6 +347,39 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* Duplicate-interview cleanup offer — see
+                  placeholderInterviewBehaviors above. */}
+              {placeholderInterviewBehaviors.length > 0 && !dismissedPlaceholderNotice && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                  <p className="text-[12px] font-semibold text-amber-900">
+                    Your interviews now come from the Quarterly Interviews list.
+                  </p>
+                  <p className="text-[11px] text-amber-800 mt-0.5">
+                    You still have {placeholderInterviewBehaviors.length} placeholder interview{' '}
+                    {placeholderInterviewBehaviors.length === 1 ? 'task' : 'tasks'} from your calling
+                    template. They were never connected to the interview list, and they now sit next
+                    to the real one. Archiving keeps their history and takes them off the grid.
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={archivePlaceholders}
+                      disabled={archivingPlaceholders}
+                      className="text-[11px] font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-md px-2.5 py-1.5 disabled:opacity-50"
+                    >
+                      {archivingPlaceholders ? 'Archiving…' : 'Archive them'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDismissedPlaceholderNotice(true)}
+                      className="text-[11px] font-semibold text-amber-900 hover:bg-amber-100 rounded-md px-2.5 py-1.5"
+                    >
+                      Keep them
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Three frequency sections. On md+ they sit side-by-side; on
                   mobile they stack. md: matches the desktop sidebar breakpoint
                   so the layout flips from one-column to three-column at the
@@ -326,6 +430,8 @@ export default function HomePage() {
                   comments={comments}
                   complianceMap={complianceMap}
                   sharing={sharing}
+                  virtualRows={myInterviewRows}
+                  virtualRowsLabel={myInterviewRows.length > 0 ? 'Your interviews this quarter' : undefined}
                   onToggle={handleToggle}
                   onRowOpen={handleRowOpen}
                   onPrev={() => setQuarterOffset(o => o - 1)}

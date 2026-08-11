@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.38.0'
+export const APP_VERSION = '2.39.0'
 
 export interface ChangelogEntry {
   version: string
@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '2.39.0',
+    date: '2026-08-09',
+    enhancements: [
+      'The Work tab now shows your actual quarterly interviews. Under "This Quarter" you get one row per person assigned to you on the Quarterly Interviews page, so checking it off in either place checks it off in both. Before this, the "Interview HC (...)" rows from your calling template were placeholders that wrote to a different list and never matched it.',
+      'Interview rows show the person and their calling, and once done they show who marked it and when.',
+      'If you still have the old placeholder interview tasks, the Work tab offers to archive them in one tap. Their history is kept.',
+      'Fixed: counselors who are not admins saw "Unknown" instead of names in the Assigned to column on the Quarterly Interviews page, because the roster was not readable to them.',
+    ],
+    bugFixes: [],
+  },
   {
     version: '2.38.0',
     date: '2026-08-09',

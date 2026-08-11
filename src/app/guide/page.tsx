@@ -129,11 +129,14 @@ export default function GuidePage() {
             <li><strong>Edit row</strong> — The pencil icon edits name, calling, and assigned-to for all four quarters at once</li>
           </ul>
           <p className="mt-2">
-            On the Work tab, each presidency member also sees a
-            <strong> &quot;My Interviews — Q[n]&quot;</strong> card listing the
-            interviews assigned to them for the current quarter. Toggling a row
-            there is the same action as toggling on the summary page — both views
-            stay in sync because they read and write the same data.
+            On the Work tab, the <strong>This Quarter</strong> section ends with
+            <strong> Your interviews this quarter</strong>: one row per person
+            assigned to you for the quarter you are viewing. Those rows are the
+            same records as the grid on this page, so checking one off in either
+            place checks it off in both, and stepping the quarter navigation back
+            or forward shows that quarter&apos;s interviews. Once a row is done it
+            shows who marked it and when. Tap the person&apos;s name to open the
+            full grid, where scheduled dates and notes live.
           </p>
           <p className="mt-2 text-xs text-gray-500">
             To grant access: an admin assigns the user a <strong>Stake role</strong> in
